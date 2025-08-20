@@ -42,6 +42,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   const [currentStep, setCurrentStep] = useState(1);
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const [micSupported, setMicSupported] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<PainInputFormValues>({
@@ -60,6 +61,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
+      setMicSupported(true);
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -88,18 +90,16 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
       };
       
       recognition.onend = () => {
-        setIsRecording(false);
+        if (isRecording) {
+            setIsRecording(false);
+        }
       };
 
       recognitionRef.current = recognition;
     } else {
-       toast({
-          title: "Browser Not Supported",
-          description: "Your browser does not support voice dictation.",
-          variant: "destructive",
-        });
+       setMicSupported(false);
     }
-  }, [getValues, setValue, toast]);
+  }, [getValues, setValue, toast, isRecording]);
   
   const handleMicClick = () => {
     if (!recognitionRef.current) return;
@@ -247,7 +247,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                         "absolute top-2 right-2 text-muted-foreground",
                         isRecording && "text-red-500 bg-red-500/10"
                     )}
-                    disabled={!recognitionRef.current}
+                    disabled={!micSupported}
                     >
                     {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                   </Button>

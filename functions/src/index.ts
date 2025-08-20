@@ -22,7 +22,7 @@ export const callAi = onRequest({ cors: true, secrets: [AIMLAPI_KEY] },
     }
 
     try {
-      const apiResponse: Response = await fetch("https://api.aimlapi.com/chat/completions", {
+      const apiResponse: Response = await fetch("https://api.aimlapi.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -35,8 +35,8 @@ export const callAi = onRequest({ cors: true, secrets: [AIMLAPI_KEY] },
           stream: false,
         }),
       });
-      logger.info('Successfully received response from AIML API.');
       const data = await apiResponse.json();
+      logger.info('Successfully received response from AIML API.',data);
       response.status(apiResponse.status).json(data);
     } catch (error) {
       logger.error('Error calling AIML API:', error);

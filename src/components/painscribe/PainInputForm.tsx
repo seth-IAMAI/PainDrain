@@ -202,7 +202,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     let isValid = false;
     if (currentStep === 1) isValid = await trigger("description");
     if (currentStep === 2) isValid = await trigger("bodyParts");
-    if (currentStep === 3) isValid = await trigger("intensity");
+    if (currentStep === 3) isValid = true; // Slider defaults to 5
     if (currentStep === 4) isValid = true; // Optional field
 
     if (isValid) {

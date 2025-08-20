@@ -39,30 +39,36 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-muted-foreground">Analyzing your description...</p>
-        </div>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 text-muted-foreground">Analyzing your description...</p>
+          </div>
+        </CardContent>
       );
     }
     if (error) {
       return (
-        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-destructive p-4">
-          <AlertCircle className="h-12 w-12" />
-          <p className="mt-4 font-semibold">Analysis Failed</p>
-          <p className="text-sm text-center">{error}</p>
-        </div>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-destructive p-4">
+            <AlertCircle className="h-12 w-12" />
+            <p className="mt-4 font-semibold">Analysis Failed</p>
+            <p className="text-sm text-center">{error}</p>
+          </div>
+        </CardContent>
       );
     }
     if (!result) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
-          <div className="text-center text-muted-foreground p-4">
-            <Sparkles className="h-12 w-12 mx-auto text-primary/50" />
-            <p className="mt-4 font-semibold text-lg">Awaiting Input</p>
-            <p>Your translated medical summary will appear here once you provide a description.</p>
-          </div>
-        </div>
+        return (
+            <CardContent>
+                <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
+                <div className="text-center text-muted-foreground p-4">
+                    <Sparkles className="h-12 w-12 mx-auto text-primary/50" />
+                    <p className="mt-4 font-semibold text-lg">Awaiting Input</p>
+                    <p>Your translated medical summary will appear here once you provide a description.</p>
+                </div>
+                </div>
+            </CardContent>
       );
     }
 

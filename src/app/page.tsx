@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { Header } from '@/components/painsribe/Header';
-import { PainInputForm } from '@/components/painsribe/PainInputForm';
-import { MedicalOutputDashboard } from '@/components/painsribe/MedicalOutputDashboard';
+import { Header } from '@/components/painscribe/Header';
+import { PainInputForm } from '@/components/painscribe/PainInputForm';
+import { MedicalOutputDashboard } from '@/components/painscribe/MedicalOutputDashboard';
 
 export default function Home() {
   const [result, setResult] = useState<any | null>(null);

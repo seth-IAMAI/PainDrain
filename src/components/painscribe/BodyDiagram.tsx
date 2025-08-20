@@ -30,7 +30,7 @@ export function BodyDiagram({ selectedLocations, onLocationClick }: BodyDiagramP
               d={part.path}
               className={cn(
                 "cursor-pointer transition-all fill-[hsl(var(--primary)/0.2)] stroke-primary stroke-2 hover:fill-[hsl(var(--primary)/0.4)]",
-                selectedParts.includes(part.id) && "fill-primary"
+ selectedLocations.includes(part.id) && "fill-primary"
               )}
  onClick={() => {
  const newSelectedLocations = selectedLocations.includes(part.id)

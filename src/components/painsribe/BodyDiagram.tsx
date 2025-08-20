@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils"
 export type BodyPart = 'head' | 'chest' | 'abdomen' | 'left-arm' | 'right-arm' | 'left-leg' | 'right-leg';
 
 interface BodyDiagramProps {
-  selectedParts: BodyPart[];
-  onPartClick: (part: BodyPart) => void;
+  selectedLocations: BodyPart[];
+  onLocationClick: (locations: BodyPart[]) => void;
 }
 
-export function BodyDiagram({ selectedParts, onPartClick }: BodyDiagramProps) {
-  const bodyPartsConfig: { id: BodyPart; path: string; }[] = [
+export function BodyDiagram({ selectedLocations, onLocationClick }: BodyDiagramProps) {
+  const bodyPartsConfig: { id: BodyPart; path: string; }[] = [ 
     { id: 'head', path: 'M 100 20 C 115 20 125 30 125 45 C 125 60 115 70 100 70 C 85 70 75 60 75 45 C 75 30 85 20 100 20 Z' },
     { id: 'chest', path: 'M 70 80 L 130 80 L 125 120 L 75 120 Z' },
     { id: 'abdomen', path: 'M 75 120 L 125 120 L 120 160 L 80 160 Z' },
@@ -32,7 +32,12 @@ export function BodyDiagram({ selectedParts, onPartClick }: BodyDiagramProps) {
                 "cursor-pointer transition-all fill-[hsl(var(--primary)/0.2)] stroke-primary stroke-2 hover:fill-[hsl(var(--primary)/0.4)]",
                 selectedParts.includes(part.id) && "fill-primary"
               )}
-              onClick={() => onPartClick(part.id)}
+ onClick={() => {
+ const newSelectedLocations = selectedLocations.includes(part.id)
+ ? selectedLocations.filter((location) => location !== part.id)
+ : [...selectedLocations, part.id];
+ onLocationClick(newSelectedLocations);
+ }}
             />
           ))}
         </g>

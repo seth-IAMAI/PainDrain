@@ -42,7 +42,8 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   const [currentStep, setCurrentStep] = useState(1);
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const [micSupported, setMicSupported] = useState(false);
+  // Check for Web Speech API support on mount
+  const micSupported = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
   const { toast } = useToast();
 
   const form = useForm<PainInputFormValues>({
@@ -59,9 +60,8 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   const { control, setValue, getValues, trigger, formState: { errors } } = form;
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!micSupported) return;
     if (SpeechRecognition) {
-      setMicSupported(true);
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -89,12 +89,11 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
         setIsRecording(false);
       };
       
-      recognition.onend = () => {
+      recognition.onend = (event) => {
         if (isRecording) {
             setIsRecording(false);
         }
       };
-
       recognitionRef.current = recognition;
     } else {
        setMicSupported(false);

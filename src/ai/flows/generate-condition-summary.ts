@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {gpt5} from 'genkit-plugin-openai';
 
 const GenerateConditionSummaryInputSchema = z.object({
   icd10Code: z.string().describe('The ICD-10 code to summarize conditions for.'),
@@ -29,6 +30,7 @@ const prompt = ai.definePrompt({
   name: 'generateConditionSummaryPrompt',
   input: {schema: GenerateConditionSummaryInputSchema},
   output: {schema: GenerateConditionSummaryOutputSchema},
+  model: gpt5,
   prompt: `You are a medical expert. Please provide a concise summary of potential conditions related to the following ICD-10 code: {{{icd10Code}}}.`,
 });
 

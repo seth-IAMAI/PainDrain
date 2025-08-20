@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {gpt5} from 'genkit-plugin-openai';
 
 const TranslatePainDescriptionInputSchema = z.object({
   patientInput: z.string().describe('The patient\'s description of their pain.'),
@@ -43,6 +44,7 @@ const translatePainDescriptionPrompt = ai.definePrompt({
   name: 'translatePainDescriptionPrompt',
   input: {schema: TranslatePainDescriptionInputSchema},
   output: {schema: TranslatePainDescriptionOutputSchema},
+  model: gpt5,
   prompt: `You are a medical translation AI that converts patient pain descriptions into precise medical terminology.
 
 Instructions:
@@ -57,7 +59,7 @@ Instructions:
 9. Format output in structured JSON for frontend consumption
 
 Here is the patient's description:
-{{patientInput}}`,
+{{{patientInput}}}`,
 });
 
 const translatePainDescriptionFlow = ai.defineFlow(

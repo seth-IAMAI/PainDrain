@@ -1,7 +1,10 @@
 import {genkit} from 'genkit';
-import {openai} from 'openai';
+import {openai} from 'genkit-plugin-openai';
 
 export const ai = genkit({
-  plugins: [openai()],
-  model: 'openai/gpt-5',
+  plugins: [
+    openai({
+      apiKey: process.env.OPENAI_API_KEY,
+    }),
+  ],
 });

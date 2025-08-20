@@ -1,5 +1,51 @@
 'use client';
 
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+
+  interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+
+    start(): void;
+    stop(): void;
+    abort(): void;
+
+    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+    onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+    onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+    onaudiostart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+    readonly results: SpeechRecognitionResultList;
+    readonly resultIndex: number;
+  }
+
+
+  interface SpeechRecognitionErrorCode {
+    readonly ABORTED: number;
+    readonly AUDIO_CAPTURE: number;
+    readonly NETWORK: number;
+    readonly NOT_ALLOWED: number;
+    readonly NO_SPEECH: number;
+    readonly SERVICE_NOT_ALLOWED: number;
+    readonly BAD_GRAMMAR: number;
+    readonly LANGUAGE_NOT_SUPPORTED: number;
+    readonly NO_MATCH: number;
+    readonly CANCELED: number; // Typo? should be ABORTED based on spec
+  }
+
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+    readonly error: SpeechRecognitionErrorCode;
+    readonly message: string;
+}
 import { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -120,12 +166,8 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   };
 
 
-  const handleBodyPartClick = (part: BodyPart) => {
-    const currentParts = getValues("bodyParts");
-    const newParts = currentParts.includes(part)
-      ? currentParts.filter(p => p !== part)
-      : [...currentParts, part];
-    setValue("bodyParts", newParts, { shouldValidate: true, shouldDirty: true });
+  const handleBodyPartClick = (locations: BodyPart[]) => {
+    setValue("bodyParts", locations, { shouldValidate: true, shouldDirty: true });
   };
   
   const onSubmit = (values: PainInputFormValues) => {
@@ -261,7 +303,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                   name="bodyParts"
                   control={control}
                   render={({ field }) => (
-                    <BodyDiagram selectedParts={field.value as BodyPart[]} onPartClick={handleBodyPartClick} />
+                    <BodyDiagram selectedLocations={field.value as BodyPart[]} onLocationClick={handleBodyPartClick} />
                   )}
                 />
                  {errors.bodyParts && <p className="text-sm text-destructive">{errors.bodyParts.message}</p>}

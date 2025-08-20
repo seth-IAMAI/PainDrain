@@ -7,11 +7,10 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, AlertCircle, FileDown, Clipboard, Check, Sparkles } from 'lucide-react';
-import type { TranslatePainDescriptionOutput } from '@/ai/flows/translate-pain-description';
 import { ConditionSummaryDialog } from './ConditionSummaryDialog';
 
 interface MedicalOutputDashboardProps {
-  result: TranslatePainDescriptionOutput | null;
+  result: any | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -50,7 +49,7 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-destructive p-4">
           <AlertCircle className="h-12 w-12" />
-          <p className="mt-4 font-semibold">Translation Failed</p>
+          <p className="mt-4 font-semibold">Analysis Failed</p>
           <p className="text-sm text-center">{error}</p>
         </div>
       );
@@ -87,7 +86,7 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
               <div>
                 <h3 className="text-lg font-semibold mb-3">Diagnostic Suggestions</h3>
                 <div className="space-y-4">
-                  {result.diagnosticSuggestions.map((suggestion, index) => (
+                  {result.diagnosticSuggestions.map((suggestion: any, index: number) => (
                     <div key={index} className="p-3 border rounded-lg bg-background">
                       <div className="flex justify-between items-center mb-2">
                         <p className="font-medium text-sm">{suggestion.diagnosis} ({suggestion.icd10Code})</p>
@@ -114,7 +113,7 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
                   </Button>
                 </h3>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {result.recommendedQuestions.map((q, i) => <li key={i}>{q}</li>)}
+                  {result.recommendedQuestions.map((q: string, i: number) => <li key={i}>{q}</li>)}
                 </ul>
               </div>
             </>}
@@ -124,7 +123,7 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
               <div>
                 <h3 className="text-lg font-semibold mb-2">Extracted Clinical Terms</h3>
                 <div className="flex flex-wrap gap-2">
-                  {result.clinicalTerms.map((term, i) => <Badge key={i} variant="secondary">{term}</Badge>)}
+                  {result.clinicalTerms.map((term: string, i: number) => <Badge key={i} variant="secondary">{term}</Badge>)}
                 </div>
               </div>
             </>}

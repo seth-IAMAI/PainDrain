@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { generateConditionSummary } from '@/ai/flows/generate-condition-summary';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -23,8 +22,8 @@ export function ConditionSummaryDialog({ icd10Code, onClose }: ConditionSummaryD
       setIsLoading(true);
       setError(null);
       try {
-        const result = await generateConditionSummary({ icd10Code });
-        setSummary(result.conditionSummary);
+        // AI functionality removed.
+        setSummary("AI functionality has been removed. This is placeholder data.");
       } catch (e) {
         const errorMsg = e instanceof Error ? e.message : 'An unknown error occurred.';
         setError(errorMsg);

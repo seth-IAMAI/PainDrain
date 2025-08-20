@@ -3,10 +3,9 @@ import { useState } from 'react';
 import { Header } from '@/components/painsribe/Header';
 import { PainInputForm } from '@/components/painsribe/PainInputForm';
 import { MedicalOutputDashboard } from '@/components/painsribe/MedicalOutputDashboard';
-import type { TranslatePainDescriptionOutput } from '@/ai/flows/translate-pain-description';
 
 export default function Home() {
-  const [result, setResult] = useState<TranslatePainDescriptionOutput | null>(null);
+  const [result, setResult] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

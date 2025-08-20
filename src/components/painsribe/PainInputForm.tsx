@@ -1,18 +1,14 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { translatePainDescription } from '@/ai/flows/translate-pain-description';
-import type { TranslatePainDescriptionOutput } from '@/ai/flows/translate-pain-description';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useToast } from "@/hooks/use-toast";
 import { BodyDiagram, BodyPart } from './BodyDiagram';
 import { Mic } from 'lucide-react';
 
@@ -28,15 +24,13 @@ const formSchema = z.object({
 type PainInputFormValues = z.infer<typeof formSchema>;
 
 interface PainInputFormProps {
-  setResult: (result: TranslatePainDescriptionOutput | null) => void;
+  setResult: (result: any | null) => void;
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   isLoading: boolean;
 }
 
-export function PainInputForm({ setResult, setIsLoading, setError }: PainInputFormProps) {
-  const { toast } = useToast();
-  const [debouncedValues, setDebouncedValues] = useState<PainInputFormValues | null>(null);
+export function PainInputForm({ setResult, setIsLoading, setError, isLoading }: PainInputFormProps) {
 
   const form = useForm<PainInputFormValues>({
     resolver: zodResolver(formSchema),
@@ -49,56 +43,7 @@ export function PainInputForm({ setResult, setIsLoading, setError }: PainInputFo
     },
   });
 
-  const { watch, control, setValue, getValues } = form;
-  const watchedValues = watch();
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-        setDebouncedValues(getValues());
-    }, 1000); // 1-second debounce
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [watchedValues, getValues]);
-
-
-  const handleTranslate = useCallback(async (values: PainInputFormValues) => {
-    if (values.description.length < 10) return;
-    
-    setIsLoading(true);
-    setError(null);
-
-    const patientInput = `
-      Description: ${values.description}.
-      Pain Intensity: ${values.intensity}/10.
-      Pain Types: ${values.painTypes.join(', ') || 'Not specified'}.
-      Location: ${values.bodyParts.join(', ') || 'Not specified'}.
-    `.trim();
-
-    try {
-      const result = await translatePainDescription({ patientInput });
-      setResult(result);
-    } catch (e) {
-      const error = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError(error);
-      setResult(null);
-      toast({
-        title: "Translation Failed",
-        description: error,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setResult, setIsLoading, setError, toast]);
-
-  useEffect(() => {
-    if (debouncedValues) {
-      handleTranslate(debouncedValues);
-    }
-  }, [debouncedValues, handleTranslate]);
-  
+  const { control, setValue, getValues } = form;
 
   const handleBodyPartClick = (part: BodyPart) => {
     const currentParts = getValues("bodyParts");
@@ -107,15 +52,37 @@ export function PainInputForm({ setResult, setIsLoading, setError }: PainInputFo
       : [...currentParts, part];
     setValue("bodyParts", newParts, { shouldValidate: true, shouldDirty: true });
   };
+  
+  const onSubmit = (values: PainInputFormValues) => {
+    // This is where the AI call would happen.
+    // Since Genkit is removed, we'll just log the data for now.
+    console.log(values);
+    setIsLoading(true);
+    setError(null);
+    setResult(null);
+
+    // Simulate API call
+    setTimeout(() => {
+        setIsLoading(false);
+        setResult({
+            patientInput: JSON.stringify(values, null, 2),
+            medicalTranslation: "AI functionality has been removed. This is placeholder data.",
+            diagnosticSuggestions: [],
+            clinicalTerms: [],
+            recommendedQuestions: [],
+            urgencyLevel: 'low',
+        });
+    }, 1000)
+  }
 
   return (
     <Card className="h-fit sticky top-8">
       <CardHeader>
         <CardTitle className="text-2xl">Pain Description</CardTitle>
-        <CardDescription>Describe your pain. Our AI will translate it into medical terms as you type.</CardDescription>
+        <CardDescription>Describe your pain. Our AI will translate it into medical terms.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="description" className="font-semibold">What does your pain feel like?</Label>
             <div className="relative">
@@ -197,7 +164,10 @@ export function PainInputForm({ setResult, setIsLoading, setError }: PainInputFo
               )}
             />
           </div>
-        </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Analyzing...' : 'Analyze Pain'}
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );

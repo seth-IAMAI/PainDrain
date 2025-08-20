@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BodyDiagram, BodyPart } from './BodyDiagram';
-import { Mic, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Mic, ArrowLeft, ArrowRight, Square } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const painTypes = ['Sharp', 'Dull', 'Aching', 'Throbbing', 'Burning', 'Stabbing', 'Shooting', 'Tingling'];
 
@@ -38,6 +40,9 @@ const totalSteps = 4;
 
 export function PainInputForm({ setResult, setIsLoading, setError, isLoading, setIsSubmitted, isSubmitted }: PainInputFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const { toast } = useToast();
 
   const form = useForm<PainInputFormValues>({
     resolver: zodResolver(formSchema),
@@ -51,6 +56,71 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   });
 
   const { control, setValue, getValues, trigger, formState: { errors } } = form;
+
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        const currentDescription = getValues('description');
+        setValue('description', currentDescription + finalTranscript + interimTranscript, { shouldValidate: true, shouldDirty: true });
+      };
+      
+      recognition.onerror = (event) => {
+        toast({
+          title: "Voice Recognition Error",
+          description: `An error occurred with voice recognition: ${event.error}`,
+          variant: "destructive",
+        });
+        setIsRecording(false);
+      };
+      
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    } else {
+       toast({
+          title: "Browser Not Supported",
+          description: "Your browser does not support voice dictation.",
+          variant: "destructive",
+        });
+    }
+  }, [getValues, setValue, toast]);
+  
+  const handleMicClick = () => {
+    if (!recognitionRef.current) return;
+    
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (error) {
+        toast({
+          title: "Could not start recording",
+          description: "Please ensure microphone permissions are granted.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
 
   const handleBodyPartClick = (part: BodyPart) => {
     const currentParts = getValues("bodyParts");
@@ -168,8 +238,18 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                       />
                     )}
                   />
-                  <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground" disabled>
-                    <Mic className="h-5 w-5" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleMicClick}
+                    className={cn(
+                        "absolute top-2 right-2 text-muted-foreground",
+                        isRecording && "text-red-500 bg-red-500/10"
+                    )}
+                    disabled={!recognitionRef.current}
+                    >
+                    {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                   </Button>
                 </div>
                 {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}

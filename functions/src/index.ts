@@ -21,35 +21,39 @@ export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
 
     const prompt = request.body.prompt;
 
-    if (!request.body.prompt) {
+    if (!prompt) {
       response.status(400).send('Bad Request: "prompt" is required.');
       return;
     }
 
     try {
-      const apiResponse: Response = await fetch(`${AIML_API_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${AIML_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          messages: [
-            {
-              role: 'system',
-              content: SYSTEM_PROMPT,
-            }, { role: "user", content: prompt }],
-          max_tokens: 512,
-          stream: false,
-        }),
+      const api = new OpenAI({
+        baseURL: AIML_API_URL,
+        apiKey: AIML_API_KEY.value(),
       });
-      const data = await apiResponse.json();
-      logger.info('Successfully received response from AIML API.', data);
-      response.status(apiResponse.status).json(data);
+
+      const result = await api.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: SYSTEM_PROMPT,
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+      });
+
+      const message = result.choices[0].message.content;
+      logger.info(`Assistant: ${message}`);
+      response.status(200).json(result);
+      return;
     } catch (error) {
       logger.error('Error calling AIML API:', error);
       response.status(500).send('Error communicating with the AI model.');
+      return;
     }
   });
 
@@ -91,4 +95,5 @@ export const testAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
     const message = result.choices[0].message.content;
     logger.info(`Assistant: ${message}`);
     response.status(200).json(result);
+    return;
   });

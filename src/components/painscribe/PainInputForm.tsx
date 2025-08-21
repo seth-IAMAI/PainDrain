@@ -1,5 +1,22 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { BodyDiagram, BodyPart } from './BodyDiagram';
+import { Mic, ArrowLeft, ArrowRight, Square } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { FIREBASE_CONFIG, REGION } from '@/lib/firebase';
+
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;
@@ -39,29 +56,12 @@ declare global {
     readonly NO_MATCH: number;
     readonly CANCELED: number; // Typo? should be ABORTED based on spec
   }
-
 }
 
 interface SpeechRecognitionErrorEvent extends Event {
   readonly error: SpeechRecognitionErrorCode;
   readonly message: string;
 }
-import { useState, useEffect, useRef } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
-import { BodyDiagram, BodyPart } from './BodyDiagram';
-import { Mic, ArrowLeft, ArrowRight, Square } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import { FIREBASE_CONFIG, REGION } from '@/lib/firebase';
 
 const painTypes = ['Sharp', 'Dull', 'Aching', 'Throbbing', 'Burning', 'Stabbing', 'Shooting', 'Tingling'];
 
@@ -198,7 +198,6 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     }
   };
 
-
   const handleBodyPartClick = (locations: BodyPart[]) => {
     setValue("bodyParts", locations, { shouldValidate: true, shouldDirty: true });
   };
@@ -212,7 +211,6 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     const prompt = generatePrompt(values);
 
     try {
-
       const callAiUrl = getFunctionUrl('callAi');
 
       if (!callAiUrl) {

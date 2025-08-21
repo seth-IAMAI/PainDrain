@@ -8,7 +8,11 @@ const OPENAI_MODEL = 'openai/gpt-5-2025-08-07';
 
 const AIML_API_KEY = defineSecret("AIML_API_KEY");
 const AIML_API_URL = 'https://api.aimlapi.com/v1';
-const SYSTEM_PROMPT = 'You are an expert and highly updated AI assistant who knows everything about factual medical information.';
+const SYSTEM_PROMPT = 'You are an expert and highly updated AI assistant who knows everything about latest factual, medically-proven information.';
+const modelOptions = {
+  model: OPENAI_MODEL,
+  max_completion_tokens: 5000,
+};
 
 export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
   async (request, response) => {
@@ -33,7 +37,7 @@ export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
       });
 
       const result = await api.chat.completions.create({
-        model: OPENAI_MODEL,
+        ...modelOptions,
         messages: [
           {
             role: 'system',
@@ -48,6 +52,7 @@ export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
 
       const message = result.choices[0].message.content;
       logger.info(`Assistant: ${message}`);
+      logger.info(`typeof: ${typeof message}`);
       response.status(200).json(result);
       return;
     } catch (error) {
@@ -79,7 +84,7 @@ export const testAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
     });
 
     const result = await api.chat.completions.create({
-      model: OPENAI_MODEL,
+      ...modelOptions,
       messages: [
         {
           role: 'system',

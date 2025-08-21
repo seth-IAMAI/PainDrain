@@ -84,11 +84,32 @@ interface PainInputFormProps {
 
 const totalSteps = 4;
 
+function generatePrompt(values: PainInputFormValues): string {
+    return `
+      Analyze the following patient's pain description and provide a medical summary.
+      The output should be a JSON object with the following structure:
+      {
+        "medicalTranslation": "A concise summary in clinical terms.",
+        "diagnosticSuggestions": [
+          { "diagnosis": "Name of condition", "icd10Code": "ICD-10", "confidence": percentage, "description": "Brief description." }
+        ],
+        "clinicalTerms": ["term1", "term2"],
+        "recommendedQuestions": ["question1", "question2"],
+        "urgencyLevel": "low" | "medium" | "high"
+      }
+
+      Patient's input:
+      - Description: ${values.description}
+      - Pain Intensity (1-10): ${values.intensity}
+      - Pain Location: ${values.bodyParts.join(', ')}
+      - Pain Types: ${values.painTypes?.join(', ') || 'Not specified'}
+    `;
+}
+
 export function PainInputForm({ setResult, setIsLoading, setError, isLoading, setIsSubmitted, isSubmitted }: PainInputFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
-  // Check for Web Speech API support
   const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
   const micSupported = !!SpeechRecognition;
   const { toast } = useToast();
@@ -143,7 +164,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
       };
       recognitionRef.current = recognition;
     }
-  }, [getValues, setValue, toast, isRecording]);
+  }, [getValues, setValue, toast, isRecording, SpeechRecognition]);
   
   const handleMicClick = () => {
     if (!recognitionRef.current) return;
@@ -170,32 +191,48 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     setValue("bodyParts", locations, { shouldValidate: true, shouldDirty: true });
   };
   
-  const onSubmit = (values: PainInputFormValues) => {
+  const onSubmit = async (values: PainInputFormValues) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
     setIsSubmitted(true);
 
-    // Simulate API call
-    setTimeout(() => {
-        setIsLoading(false);
-        setResult({
-            patientInput: JSON.stringify(values, null, 2),
-            medicalTranslation: "Based on your input, the patient is experiencing moderate, sharp pain in the head. This could potentially be related to tension headaches or migraines, but further investigation is needed. The patient also notes the pain worsens with coughing.",
-            diagnosticSuggestions: [
-              { diagnosis: 'Migraine with aura', icd10Code: 'G43.1', confidence: 75, description: 'Recurring headache that strikes after or along with sensory disturbances.' },
-              { diagnosis: 'Tension-type headache', icd10Code: 'G44.2', confidence: 60, description: 'Mild to moderate pain in your head that\'s often described as feeling like a tight band around your head.' },
-              { diagnosis: 'Cluster headache', icd10Code: 'G44.0', confidence: 45, description: 'Pain is severe and occurs in clusters, usually on one side of the head.' }
-            ],
-            clinicalTerms: ['Sharp Pain', 'Headache', 'Cough-induced'],
-            recommendedQuestions: [
-              'How often do these headaches occur?', 
-              'Is the pain on one side of your head or both?',
-              'Are you experiencing any sensitivity to light or sound?'
-            ],
-            urgencyLevel: 'medium',
+    const prompt = generatePrompt(values);
+
+    try {
+      // IMPORTANT: Replace with your actual Cloud Function URL
+      const functionUrl = 'https://callai-klqfrw4wma-uc.a.run.app';
+      
+      const response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`API returned ${response.status}: ${errorData}`);
+      }
+      
+      const data = await response.json();
+
+      // The AIMLAPI returns a stringified JSON in the 'content' of the first choice.
+      const content = JSON.parse(data.choices[0].message.content);
+      setResult(content);
+
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'An unknown error occurred.';
+        setError(`Failed to get analysis. Please try again. Error: ${errorMsg}`);
+        toast({
+            title: "Analysis Failed",
+            description: errorMsg,
+            variant: "destructive",
         });
-    }, 1000)
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   const handleNext = async () => {
@@ -287,7 +324,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                         "absolute top-2 right-2 text-muted-foreground",
                         isRecording && "text-red-500 bg-red-500/10"
                     )}
-                    disabled={!micSupported}
+                    disabled={!micSupported || !recognitionRef.current}
                     >
                     {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                   </Button>

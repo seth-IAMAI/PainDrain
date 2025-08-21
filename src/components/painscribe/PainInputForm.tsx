@@ -344,6 +344,10 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                 >
                   {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </Button>
+                  {getValues('bodyParts').length > 0 && (
+                    <p className="text-sm text-muted-foreground">Selected: {getValues('bodyParts').join(', ')}</p>
+                  )}
+                 {errors.bodyParts && <p className="text-sm text-destructive">{errors.bodyParts.message}</p>}
               </div>
               {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
             </div>

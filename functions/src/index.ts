@@ -14,7 +14,7 @@ const modelOptions = {
   max_completion_tokens: 10000,
 };
 
-export const callAi = onRequest({ cors: ['*', 'https://studio--paindrain-gpt5.us-central1.hosted.app'], secrets: [AIML_API_KEY] },
+export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
   async (request, response) => {
     logger.info('Request received', { body: request.body });
     if (!AIML_API_KEY) {

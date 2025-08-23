@@ -88,6 +88,7 @@ const totalSteps = 4;
 function generatePrompt(values: PainInputFormValues): string {
   return `
       Analyze the following patient's pain description and provide a medical summary.
+      Give no more than 3 Diagnostic Suggestions and no more than 4-5 Recommended Questions.
       The output should be a JSON object with the following structure:
       {
         "medicalTranslation": "A concise summary in clinical terms.",

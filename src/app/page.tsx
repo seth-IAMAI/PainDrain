@@ -6,6 +6,8 @@ import { MedicalOutputDashboard } from '@/components/painscribe/MedicalOutputDas
 import { SplashScreen } from '@/components/painscribe/SplashScreen';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PainHistory } from '@/components/painscribe/PainHistory';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 export default function Home() {
   const [result, setResult] = useState<any | null>(null);

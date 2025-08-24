@@ -11,7 +11,7 @@ const AIML_API_URL = 'https://api.aimlapi.com/v1';
 const SYSTEM_PROMPT = 'You are an expert and highly updated AI assistant who knows everything about latest factual, medically-proven information.';
 const modelOptions = {
   model: OPENAI_MODEL,
-  max_completion_tokens: 5000,
+  max_completion_tokens: 10000,
 };
 
 export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
@@ -38,6 +38,7 @@ export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
 
       const result = await api.chat.completions.create({
         ...modelOptions,
+        reasoning_effort: 'low',
         messages: [
           {
             role: 'system',
@@ -85,6 +86,7 @@ export const testAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
 
     const result = await api.chat.completions.create({
       ...modelOptions,
+      reasoning_effort: 'low',
       messages: [
         {
           role: 'system',

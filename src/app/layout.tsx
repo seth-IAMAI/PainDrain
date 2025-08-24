@@ -11,7 +11,7 @@ const fontSans = FontSans({
 
 export const metadata: Metadata = {
   title: 'PainDrain',
-  description: 'AI-powered medical communication platform',
+  description: 'AI-powered Patient-to-Doctor Medical Translation Platform',
 };
 
 export default function RootLayout({

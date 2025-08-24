@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, AlertCircle, FileDown, Clipboard, Check, Sparkles } from 'lucide-react';
 import { ConditionSummaryDialog } from './ConditionSummaryDialog';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface MedicalOutputDashboardProps {
   result: any | null;
@@ -18,12 +20,44 @@ interface MedicalOutputDashboardProps {
 export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutputDashboardProps) {
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<string | null>(null);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = (text: string, section: string) => {
     navigator.clipboard.writeText(text);
     setCopiedSection(section);
     setTimeout(() => setCopiedSection(null), 2000);
   };
+
+  const handleExport = async () => {
+    if (!reportRef.current) return;
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'px', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / canvasHeight;
+      const width = pdfWidth;
+      const height = width / ratio;
+
+      let finalHeight = height;
+      if (height > pdfHeight) {
+        finalHeight = pdfHeight;
+      }
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, width, finalHeight);
+      pdf.save('PainDrain-Analysis.pdf');
+    } catch (error) {
+        console.error("Failed to export to PDF", error);
+    } finally {
+        setIsExporting(false);
+    }
+  };
+
 
   const getUrgencyBadgeVariant = (urgency: 'low' | 'medium' | 'high' | undefined) => {
     switch (urgency) {
@@ -135,9 +169,9 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
             </>}
         </CardContent>
         <CardFooter>
-            <Button className="w-full" disabled>
-                <FileDown className="mr-2 h-4 w-4" />
-                Export as PDF (Coming Soon)
+            <Button className="w-full" onClick={handleExport} disabled={isExporting}>
+                {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                {isExporting ? 'Exporting...' : 'Export as PDF'}
             </Button>
         </CardFooter>
       </>
@@ -145,7 +179,7 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
   };
 
   return (
-    <Card className="h-fit">
+    <Card className="h-fit" ref={reportRef}>
       <CardHeader>
         <CardTitle className="text-2xl">AI-Powered Medical Analysis</CardTitle>
         <CardDescription>Review the AI-generated insights based on your description.</CardDescription>

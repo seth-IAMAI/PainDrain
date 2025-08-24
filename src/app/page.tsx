@@ -42,7 +42,7 @@ export default function Home() {
       setActiveTab("analysis");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analysisResult, isSubmitted, currentPainInput]);
+  }, [analysisResult, isSubmitted]);
 
 
   const handleNewEntry = () => {

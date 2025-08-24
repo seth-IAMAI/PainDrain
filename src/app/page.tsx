@@ -41,7 +41,8 @@ export default function Home() {
       setPainHistory(prev => [newEntry, ...prev]);
       setActiveTab("analysis");
     }
-  }, [analysisResult, isSubmitted, currentPainInput, setPainHistory]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysisResult, isSubmitted, currentPainInput]);
 
 
   const handleNewEntry = () => {

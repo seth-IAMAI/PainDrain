@@ -13,7 +13,6 @@ export function SplashScreen() {
         priority
       />
       <div className="mt-4 text-center">
-        <h1 className="text-4xl font-bold text-primary">PainDrain</h1>
         <p className="text-muted-foreground">Your AI-powered health companion</p>
       </div>
     </div>

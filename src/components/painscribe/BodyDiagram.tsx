@@ -24,16 +24,16 @@ const bodyPartHotspots: { id: BodyPart; x: number; y: number; width: number; hei
     { id: 'chest', x: 33, y: 16, width: 34, height: 12, view: 'front' },
     { id: 'abdomen', x: 35, y: 28, width: 30, height: 10, view: 'front' },
     { id: 'pelvis', x: 35, y: 38, width: 30, height: 8, view: 'front' },
-    { id: 'right-shoulder', x: 25, y: 16, width: 10, height: 5, view: 'front' }, // Patient's Right
-    { id: 'left-shoulder', x: 65, y: 16, width: 10, height: 5, view: 'front' }, // Patient's Left
-    { id: 'right-arm', x: 18, y: 22, width: 15, height: 35, view: 'front' }, // Patient's Right
-    { id: 'left-arm', x: 67, y: 22, width: 15, height: 35, view: 'front' }, // Patient's Left
-    { id: 'right-hand', x: 15, y: 57, width: 10, height: 10, view: 'front' }, // Patient's Right
-    { id: 'left-hand', x: 75, y: 57, width: 10, height: 10, view: 'front' }, // Patient's Left
-    { id: 'right-leg', x: 35, y: 46, width: 15, height: 40, view: 'front' }, // Patient's Right
-    { id: 'left-leg', x: 50, y: 46, width: 15, height: 40, view: 'front' }, // Patient's Left
-    { id: 'right-foot', x: 35, y: 86, width: 15, height: 8, view: 'front' }, // Patient's Right
-    { id: 'left-foot', x: 50, y: 86, width: 15, height: 8, view: 'front' }, // Patient's Left
+    { id: 'left-shoulder', x: 25, y: 16, width: 10, height: 5, view: 'front' }, // Patient's Left from viewer's perspective
+    { id: 'right-shoulder', x: 65, y: 16, width: 10, height: 5, view: 'front' }, // Patient's Right
+    { id: 'left-arm', x: 18, y: 22, width: 15, height: 35, view: 'front' }, // Patient's Left
+    { id: 'right-arm', x: 67, y: 22, width: 15, height: 35, view: 'front' }, // Patient's Right
+    { id: 'left-hand', x: 15, y: 57, width: 10, height: 10, view: 'front' }, // Patient's Left
+    { id: 'right-hand', x: 75, y: 57, width: 10, height: 10, view: 'front' }, // Patient's Right
+    { id: 'left-leg', x: 35, y: 46, width: 15, height: 40, view: 'front' }, // Patient's Left
+    { id: 'right-leg', x: 50, y: 46, width: 15, height: 40, view: 'front' }, // Patient's Right
+    { id: 'left-foot', x: 35, y: 86, width: 15, height: 8, view: 'front' }, // Patient's Left
+    { id: 'right-foot', x: 50, y: 86, width: 15, height: 8, view: 'front' }, // Patient's Right
     
     // Back view (viewer's perspective)
     { id: 'head', x: 40, y: 2, width: 20, height: 13, view: 'back' },
@@ -64,7 +64,7 @@ export function BodyDiagram({ selectedLocations, onLocationClick, gender }: Body
   return (
     <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 bg-secondary/30 p-4 rounded-lg">
       <div className="relative mx-auto" data-ai-hint="body diagram female front">
-        <Image src={frontImage} alt={`${gender} front view`} width={98} height={196} className="w-full h-auto" />
+        <Image src={frontImage} alt={`${gender} front view`} width={88} height={178} className="w-full h-auto" />
         <div className="absolute inset-0">
           {bodyPartHotspots.filter(p => p.view === 'front').map((part) => (
             <div
@@ -86,7 +86,7 @@ export function BodyDiagram({ selectedLocations, onLocationClick, gender }: Body
         </div>
       </div>
       <div className="relative mx-auto" data-ai-hint="body diagram female back">
-        <Image src={backImage} alt={`${gender} back view`} width={98} height={196} className="w-full h-auto" />
+        <Image src={backImage} alt={`${gender} back view`} width={88} height={178} className="w-full h-auto" />
         <div className="absolute inset-0">
           {bodyPartHotspots.filter(p => p.view === 'back').map((part) => (
             <div

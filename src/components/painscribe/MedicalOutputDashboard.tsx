@@ -200,7 +200,7 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
             </Button>
         </CardFooter>
       )}
-      {selectedDiagnosis && <ConditionSummaryDialog icd10Code={selectedDiagnosis} onClose={() => setSelectedDiagnosis(null)} />}
+      {selectedDiagnosis && <ConditionSummaryDialog icd10Code={selectedDiagnosis} additional_description={result.additional_description} onClose={() => setSelectedDiagnosis(null)} />}
     </Card>
   );
 }

@@ -38,7 +38,7 @@ interface PainInputFormProps {
   isSubmitted?: boolean;
 }
 
-const totalSteps = 5;
+const totalSteps = 4;
 
 function generatePrompt(values: PainInputFormValues): string {
   return `
@@ -122,7 +122,6 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   
   const handleGenderSelect = (gender: 'female' | 'male') => {
     setSelectedGender(gender);
-    setCurrentStep(prev => prev + 1);
   };
 
   const onSubmit = async (values: PainInputFormValues) => {
@@ -157,7 +156,6 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
 
       const data = await callAiResponse.json();
 
-      // The AIMLAPI returns a stringified JSON in the 'content' of the first choice.
       const content = JSON.parse(data.choices[0].message.content);
       setResult(content);
 
@@ -177,10 +175,9 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   const handleNext = async () => {
     let isValid = false;
     if (currentStep === 1) isValid = await trigger("description");
-    if (currentStep === 2) isValid = true; // Gender selection, no validation needed
-    if (currentStep === 3) isValid = await trigger("bodyParts");
-    if (currentStep === 4) isValid = true; // Slider defaults to 5
-    if (currentStep === 5) isValid = true; // Optional field
+    if (currentStep === 2) isValid = await trigger("bodyParts");
+    if (currentStep === 3) isValid = await trigger("intensity");
+    if (currentStep === 4) isValid = true; // Optional field
 
     if (isValid) {
       setCurrentStep(prev => prev + 1);
@@ -196,27 +193,18 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     let description = "Describe your pain. Our AI will translate it into medical terms.";
 
     if (currentStep === 2) {
-      title = "Gender";
-      description = "Select the body type that best represents you."
-    }
-    
-    if (currentStep === 3) {
       title = "Pain Mapping";
       description = "Select the area(s) where you feel pain.";
     }
 
-    if (currentStep === 4) {
+    if (currentStep === 3) {
       title = "Pain Intensity";
       description = "Rate your pain on a scale from 1 to 10.";
     }
 
-    if(isSubmitted) {
-      return (
-        <CardHeader>
-          <CardTitle className="text-2xl">Pain Description</CardTitle>
-          <CardDescription>Review your submission or start over.</CardDescription>
-        </CardHeader>
-      )
+     if (currentStep === 4) {
+      title = "Pain Type";
+      description = "Which words best describe your pain? (optional)";
     }
 
     return (
@@ -227,11 +215,14 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
         </CardHeader>
     );
   };
-
-  if (isSubmitted && !isLoading) {
+  
+    if (isSubmitted && !isLoading) {
     return (
       <Card className="h-fit sticky top-8">
-        {renderCardHeader()}
+        <CardHeader>
+          <CardTitle className="text-2xl">Submission Summary</CardTitle>
+          <CardDescription>Your pain entry has been submitted for analysis.</CardDescription>
+        </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
@@ -252,22 +243,15 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
             </div>}
           </div>
         </CardContent>
-        <CardFooter>
-          <Button variant="outline" className="w-full" onClick={() => {
-            form.reset();
-            setIsSubmitted(false);
-            setResult(null);
-            setCurrentStep(1);
-          }}>Start Over</Button>
-        </CardFooter>
       </Card>
     );
   }
 
+
   return (
-    <Card className="h-fit sticky top-8">
-      {renderCardHeader()}
-      <CardContent>
+    <Card className="w-full">
+      {!isSubmitted && renderCardHeader()}
+      <CardContent className="pt-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {currentStep === 1 && (
             <div className="space-y-2 animate-in fade-in">
@@ -305,31 +289,18 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
           )}
 
           {currentStep === 2 && (
-             <div className="space-y-4 animate-in fade-in">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button 
-                    type="button" 
-                    variant={selectedGender === 'female' ? 'secondary' : 'outline'}
-                    onClick={() => handleGenderSelect('female')}
-                    className="w-full h-12 text-lg"
-                  >
-                    Female
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant={selectedGender === 'male' ? 'secondary' : 'outline'}
-                    onClick={() => handleGenderSelect('male')}
-                     className="w-full h-12 text-lg"
-                  >
-                    Male
-                  </Button>
-                </div>
-            </div>
-          )}
-
-          {currentStep === 3 && (
             <div className="space-y-3 animate-in fade-in">
-              <Label className="font-semibold text-lg">Where do you feel the pain?</Label>
+              <div className="flex justify-between items-center mb-2">
+                <Label className="font-semibold text-lg">Where do you feel the pain?</Label>
+                 <div className="flex items-center gap-2">
+                    <Label>Gender</Label>
+                    <div className="flex rounded-md border p-1">
+                        <button type="button" onClick={() => handleGenderSelect('female')} className={cn("px-2 py-1 text-sm rounded-sm", selectedGender === 'female' && 'bg-primary text-primary-foreground')}>Female</button>
+                        <button type="button" onClick={() => handleGenderSelect('male')} className={cn("px-2 py-1 text-sm rounded-sm", selectedGender === 'male' && 'bg-primary text-primary-foreground')}>Male</button>
+                    </div>
+                </div>
+              </div>
+
               <Controller
                 name="bodyParts"
                 control={control}
@@ -347,7 +318,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
             </div>
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <div className="space-y-3 animate-in fade-in">
               <Label htmlFor="intensity" className="font-semibold text-lg">How intense is the pain? (1-10)</Label>
               <Controller
@@ -370,7 +341,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
             </div>
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 4 && (
             <div className="space-y-3 animate-in fade-in">
               <Label className="font-semibold text-lg">Which words best describe your pain? (optional)</Label>
               <Controller
@@ -403,23 +374,21 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
       </CardContent>
       <CardFooter className="flex justify-between">
         {currentStep > 1 ? (
-          <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading || currentStep === 2}>
+          <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
         ) : <div />}
 
-        {currentStep < totalSteps && currentStep !== 2 ? (
+        {currentStep < totalSteps ? (
           <Button type="button" onClick={handleNext} disabled={isLoading}>
             Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
-          currentStep === totalSteps && (
           <Button type="submit" onClick={form.handleSubmit(onSubmit)} className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
             {isLoading ? 'Analyzing...' : 'Analyze Pain'}
           </Button>
-          )
         )}
       </CardFooter>
     </Card>

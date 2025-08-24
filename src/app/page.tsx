@@ -31,8 +31,8 @@ export default function Home() {
             <Image
                 src="/paindrain-logo.png"
                 alt="PainDrain Logo"
-                width={100}
-                height={100}
+                width={60}
+                height={60}
             />
         </div>
         <div className="w-full flex flex-col md:flex-row gap-8 items-start justify-center">

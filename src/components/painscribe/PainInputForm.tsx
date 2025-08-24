@@ -83,7 +83,7 @@ interface PainInputFormProps {
   isSubmitted?: boolean;
 }
 
-const totalSteps = 4;
+const totalSteps = 5;
 
 function generatePrompt(values: PainInputFormValues): string {
   return `
@@ -202,6 +202,11 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   const handleBodyPartClick = (locations: BodyPart[]) => {
     setValue("bodyParts", locations, { shouldValidate: true, shouldDirty: true });
   };
+  
+  const handleGenderSelect = (gender: 'female' | 'male') => {
+    setSelectedGender(gender);
+    setCurrentStep(prev => prev + 1);
+  };
 
   const onSubmit = async (values: PainInputFormValues) => {
     setIsLoading(true);
@@ -255,9 +260,10 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   const handleNext = async () => {
     let isValid = false;
     if (currentStep === 1) isValid = await trigger("description");
-    if (currentStep === 2) isValid = await trigger("bodyParts");
-    if (currentStep === 3) isValid = true; // Slider defaults to 5
-    if (currentStep === 4) isValid = true; // Optional field
+    if (currentStep === 2) isValid = true; // Gender selection, no validation needed
+    if (currentStep === 3) isValid = await trigger("bodyParts");
+    if (currentStep === 4) isValid = true; // Slider defaults to 5
+    if (currentStep === 5) isValid = true; // Optional field
 
     if (isValid) {
       setCurrentStep(prev => prev + 1);
@@ -268,13 +274,42 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     setCurrentStep(prev => prev - 1);
   };
 
-  if (isSubmitted && !isLoading) {
-    return (
-      <Card className="h-fit sticky top-8">
+  const renderCardHeader = () => {
+    let title = "Pain Description";
+    let description = "Describe your pain. Our AI will translate it into medical terms.";
+
+    if (currentStep === 2) {
+      title = "Gender";
+      description = "Select the body type that best represents you."
+    }
+    
+    if (currentStep === 3) {
+      title = "Pain Mapping";
+      description = "Select the area(s) where you feel pain.";
+    }
+
+    if(isSubmitted) {
+      return (
         <CardHeader>
           <CardTitle className="text-2xl">Pain Description</CardTitle>
           <CardDescription>Review your submission or start over.</CardDescription>
         </CardHeader>
+      )
+    }
+
+    return (
+        <CardHeader>
+          <CardTitle className="text-2xl">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+          <Progress value={(currentStep / totalSteps) * 100} className="mt-4" />
+        </CardHeader>
+    );
+  };
+
+  if (isSubmitted && !isLoading) {
+    return (
+      <Card className="h-fit sticky top-8">
+        {renderCardHeader()}
         <CardContent>
           <div className="space-y-4">
             <div>
@@ -309,11 +344,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
 
   return (
     <Card className="h-fit sticky top-8">
-      <CardHeader>
-        <CardTitle className="text-2xl">Pain Description</CardTitle>
-        <CardDescription>Describe your pain. Our AI will translate it into medical terms.</CardDescription>
-        <Progress value={(currentStep / totalSteps) * 100} className="mt-4" />
-      </CardHeader>
+      {renderCardHeader()}
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {currentStep === 1 && (
@@ -351,25 +382,30 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
           )}
 
           {currentStep === 2 && (
+             <div className="space-y-4 animate-in fade-in">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button 
+                    type="button" 
+                    variant={selectedGender === 'female' ? 'secondary' : 'outline'}
+                    onClick={() => handleGenderSelect('female')}
+                    className="w-full h-12 text-lg"
+                  >
+                    Female
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant={selectedGender === 'male' ? 'secondary' : 'outline'}
+                    onClick={() => handleGenderSelect('male')}
+                     className="w-full h-12 text-lg"
+                  >
+                    Male
+                  </Button>
+                </div>
+            </div>
+          )}
+
+          {currentStep === 3 && (
             <div className="space-y-3 animate-in fade-in">
-               <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  variant={selectedGender === 'female' ? 'secondary' : 'outline'}
-                  onClick={() => setSelectedGender('female')}
-                  className="w-full"
-                >
-                  Female
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={selectedGender === 'male' ? 'secondary' : 'outline'}
-                  onClick={() => setSelectedGender('male')}
-                  className="w-full"
-                >
-                  Male
-                </Button>
-              </div>
               <Label className="font-semibold text-lg">Where do you feel the pain?</Label>
               <Controller
                 name="bodyParts"
@@ -388,7 +424,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
             </div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 4 && (
             <div className="space-y-3 animate-in fade-in">
               <Label htmlFor="intensity" className="font-semibold text-lg">How intense is the pain? (1-10)</Label>
               <Controller
@@ -411,7 +447,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
             </div>
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 5 && (
             <div className="space-y-3 animate-in fade-in">
               <Label className="font-semibold text-lg">Which words best describe your pain? (optional)</Label>
               <Controller
@@ -444,21 +480,23 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
       </CardContent>
       <CardFooter className="flex justify-between">
         {currentStep > 1 ? (
-          <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>
+          <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading || currentStep === 2}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
         ) : <div />}
 
-        {currentStep < totalSteps ? (
+        {currentStep < totalSteps && currentStep !== 2 ? (
           <Button type="button" onClick={handleNext} disabled={isLoading}>
             Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
+          currentStep === totalSteps && (
           <Button type="submit" onClick={form.handleSubmit(onSubmit)} className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
             {isLoading ? 'Analyzing...' : 'Analyze Pain'}
           </Button>
+          )
         )}
       </CardFooter>
     </Card>

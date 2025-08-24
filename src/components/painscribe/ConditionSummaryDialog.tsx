@@ -8,10 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ConditionSummaryDialogProps {
   icd10Code: string;
+  additional_description: string;
   onClose: () => void;
 }
 
-export function ConditionSummaryDialog({ icd10Code, onClose }: ConditionSummaryDialogProps) {
+export function ConditionSummaryDialog({ icd10Code, additional_description, onClose }: ConditionSummaryDialogProps) {
   const [summary, setSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export function ConditionSummaryDialog({ icd10Code, onClose }: ConditionSummaryD
       setError(null);
       try {
         // AI functionality removed.
-        setSummary("AI functionality has been removed. This is placeholder data.");
+        setSummary(additional_description);
       } catch (e) {
         const errorMsg = e instanceof Error ? e.message : 'An unknown error occurred.';
         setError(errorMsg);

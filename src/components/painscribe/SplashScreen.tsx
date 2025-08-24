@@ -13,7 +13,7 @@ export function SplashScreen() {
         priority
       />
       <div className="mt-4 text-center">
-        <p className="text-muted-foreground">Your AI-powered health companion</p>
+        <p className="text-muted-foreground">Your AI-powered Patient-to-Doctor Translator</p>
       </div>
     </div>
   );

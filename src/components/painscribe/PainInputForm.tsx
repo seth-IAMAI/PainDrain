@@ -38,7 +38,7 @@ interface PainInputFormProps {
   isSubmitted?: boolean;
 }
 
-const totalSteps = 4;
+const totalSteps = 5;
 
 function generatePrompt(values: PainInputFormValues): string {
   return `
@@ -48,7 +48,7 @@ function generatePrompt(values: PainInputFormValues): string {
       {
         "medicalTranslation": "A concise summary in clinical terms.",
         "diagnosticSuggestions": [
-          { "diagnosis": "Name of condition", "icd10Code": "ICD-10", "confidence": percentage, "description": "Brief description." }
+          { "diagnosis": "Name of condition", "icd10Code": "ICD-10", "confidence": percentage, "description": "Brief description.", "additional_description": "Additional description." }
         ],
         "clinicalTerms": ["term1", "term2"],
         "recommendedQuestions": ["question1", "question2"],
@@ -296,22 +296,20 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
           )}
 
 
-{currentStep === 2 && (
+          {currentStep === 2 && (
              <div className="space-y-4 animate-in fade-in">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button 
                     type="button" 
-                    variant={selectedGender === 'female' ? 'secondary' : 'outline'}
+                    className={cn("w-full h-12 text-lg", selectedGender === 'female' ? 'outline' : 'bg-gray-300 text-white')}
                     onClick={() => handleGenderSelect('female')}
-                    className="w-full h-12 text-lg"
                   >
                     Female
                   </Button>
                   <Button 
                     type="button" 
-                    variant={selectedGender === 'male' ? 'secondary' : 'outline'}
-                    onClick={() => handleGenderSelect('male')}
-                     className="w-full h-12 text-lg"
+                    className={cn("w-full h-12 text-lg", selectedGender === 'male' ? 'outline' : 'bg-gray-300 text-white')}
+                    onClick={() => handleGenderSelect('male')}                 
                   >
                     Male
                   </Button>

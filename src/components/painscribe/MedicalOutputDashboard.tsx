@@ -125,7 +125,6 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
     }
 
     return (
-      <>
         <CardContent className="space-y-6 pt-6">
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-semibold">Medical Summary</h3>
@@ -186,23 +185,26 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
               </div>
             </>}
         </CardContent>
+    );
+  };
+
+  return (
+    <Card className="h-fit">
+      <div ref={reportRef}>
+        <CardHeader>
+            <CardTitle className="text-2xl">AI-Powered Medical Analysis</CardTitle>
+            <CardDescription>Review the AI-generated insights based on your description.</CardDescription>
+        </CardHeader>
+        {renderContent()}
+      </div>
+      {result && !isLoading && (
         <CardFooter>
             <Button className="w-full" onClick={handleExport} disabled={isExporting}>
                 {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                 {isExporting ? 'Exporting...' : 'Export as PDF'}
             </Button>
         </CardFooter>
-      </>
-    );
-  };
-
-  return (
-    <Card className="h-fit" ref={reportRef}>
-      <CardHeader>
-        <CardTitle className="text-2xl">AI-Powered Medical Analysis</CardTitle>
-        <CardDescription>Review the AI-generated insights based on your description.</CardDescription>
-      </CardHeader>
-      {renderContent()}
+      )}
       {selectedDiagnosis && <ConditionSummaryDialog icd10Code={selectedDiagnosis} onClose={() => setSelectedDiagnosis(null)} />}
     </Card>
   );

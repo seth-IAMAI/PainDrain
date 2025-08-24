@@ -116,11 +116,19 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
       };
       
       recognition.onerror = (event) => {
+        let errorMessage = `An error occurred with voice recognition: ${event.error}`;
+        if (event.error === 'network') {
+          errorMessage = 'Network error with voice recognition. Please check your internet connection and try again.';
+        } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          errorMessage = 'Microphone access denied. Please enable microphone permissions in your browser settings.';
+        }
+        
         toast({
           title: "Voice Recognition Error",
-          description: `An error occurred: ${event.error}`,
+          description: errorMessage,
           variant: "destructive",
         });
+
         if (isRecording) setIsRecording(false);
       };
 

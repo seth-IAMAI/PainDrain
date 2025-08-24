@@ -38,7 +38,7 @@ interface PainInputFormProps {
   isSubmitted?: boolean;
 }
 
-const totalSteps = 5;
+const totalSteps = 4;
 
 function generatePrompt(values: PainInputFormValues): string {
   return `
@@ -119,10 +119,9 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   const handleBodyPartClick = (locations: BodyPart[]) => {
     setValue("bodyParts", locations, { shouldValidate: true, shouldDirty: true });
   };
-  
+
   const handleGenderSelect = (gender: 'female' | 'male') => {
     setSelectedGender(gender);
-    setCurrentStep(prev => prev + 1);
   };
 
   const onSubmit = async (values: PainInputFormValues) => {
@@ -157,7 +156,6 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
 
       const data = await callAiResponse.json();
 
-      // The AIMLAPI returns a stringified JSON in the 'content' of the first choice.
       const content = JSON.parse(data.choices[0].message.content);
       setResult(content);
 
@@ -174,6 +172,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     }
   }
 
+ 
   const handleNext = async () => {
     let isValid = false;
     if (currentStep === 1) isValid = await trigger("description");
@@ -210,28 +209,27 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
       description = "Rate your pain on a scale from 1 to 10.";
     }
 
-    if(isSubmitted) {
-      return (
-        <CardHeader>
-          <CardTitle className="text-2xl">Pain Description</CardTitle>
-          <CardDescription>Review your submission or start over.</CardDescription>
-        </CardHeader>
-      )
+    if (currentStep === 5) {
+      title = "Pain Type";
+      description = "Which words best describe your pain? (optional)";
     }
 
     return (
-        <CardHeader>
-          <CardTitle className="text-2xl">{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-          <Progress value={(currentStep / totalSteps) * 100} className="mt-4" />
-        </CardHeader>
+      <CardHeader>
+        <CardTitle className="text-2xl">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+        <Progress value={(currentStep / totalSteps) * 100} className="mt-4" />
+      </CardHeader>
     );
   };
 
   if (isSubmitted && !isLoading) {
     return (
       <Card className="h-fit sticky top-8">
-        {renderCardHeader()}
+        <CardHeader>
+          <CardTitle className="text-2xl">Submission Summary</CardTitle>
+          <CardDescription>Your pain entry has been submitted for analysis.</CardDescription>
+        </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
@@ -252,22 +250,15 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
             </div>}
           </div>
         </CardContent>
-        <CardFooter>
-          <Button variant="outline" className="w-full" onClick={() => {
-            form.reset();
-            setIsSubmitted(false);
-            setResult(null);
-            setCurrentStep(1);
-          }}>Start Over</Button>
-        </CardFooter>
       </Card>
     );
   }
 
+
   return (
-    <Card className="h-fit sticky top-8">
-      {renderCardHeader()}
-      <CardContent>
+    <Card className="w-full">
+      {!isSubmitted && renderCardHeader()}
+      <CardContent className="pt-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {currentStep === 1 && (
             <div className="space-y-2 animate-in fade-in">
@@ -304,7 +295,8 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
             </div>
           )}
 
-          {currentStep === 2 && (
+
+{currentStep === 2 && (
              <div className="space-y-4 animate-in fade-in">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button 
@@ -329,21 +321,22 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
 
           {currentStep === 3 && (
             <div className="space-y-3 animate-in fade-in">
-              <Label className="font-semibold text-lg">Where do you feel the pain?</Label>
-              <Controller
-                name="bodyParts"
-                control={control}
-                render={({ field }) => (
-                  <BodyDiagram 
-                    gender={selectedGender}
-                    selectedLocations={field.value as BodyPart[]} 
-                    onLocationClick={handleBodyPartClick} />
-                )}
-              />
-              {getValues('bodyParts').length > 0 && (
-                    <p className="text-sm text-muted-foreground">Selected: {getValues('bodyParts').join(', ')}</p>
+              <div className="flex justify-between items-center mb-2">
+                <Controller
+                  name="bodyParts"
+                  control={control}
+                  render={({ field }) => (
+                    <BodyDiagram
+                      gender={selectedGender}
+                      selectedLocations={field.value as BodyPart[]}
+                      onLocationClick={handleBodyPartClick} />
                   )}
-              {errors.bodyParts && <p className="text-sm text-destructive">{errors.bodyParts.message}</p>}
+                />
+                {getValues('bodyParts').length > 0 && (
+                  <p className="text-sm text-muted-foreground">Selected: {getValues('bodyParts').join(', ')}</p>
+                )}
+                {errors.bodyParts && <p className="text-sm text-destructive">{errors.bodyParts.message}</p>}
+              </div>
             </div>
           )}
 
@@ -403,23 +396,21 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
       </CardContent>
       <CardFooter className="flex justify-between">
         {currentStep > 1 ? (
-          <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading || currentStep === 2}>
+          <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
         ) : <div />}
 
-        {currentStep < totalSteps && currentStep !== 2 ? (
+        {currentStep < totalSteps ? (
           <Button type="button" onClick={handleNext} disabled={isLoading}>
             Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
-          currentStep === totalSteps && (
           <Button type="submit" onClick={form.handleSubmit(onSubmit)} className="bg-green-600 hover:bg-green-700" disabled={isLoading}>
             {isLoading ? 'Analyzing...' : 'Analyze Pain'}
           </Button>
-          )
         )}
       </CardFooter>
     </Card>

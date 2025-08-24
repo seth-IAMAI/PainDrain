@@ -16,6 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FIREBASE_CONFIG, REGION } from '@/lib/firebase';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
 const painTypes = ['Sharp', 'Dull', 'Aching', 'Throbbing', 'Burning', 'Stabbing', 'Shooting', 'Tingling'];
 
@@ -65,9 +66,6 @@ function generatePrompt(values: PainInputFormValues): string {
 export function PainInputForm({ setResult, setIsLoading, setError, isLoading, setIsSubmitted, isSubmitted }: PainInputFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedGender, setSelectedGender] = useState<'female' | 'male'>('female');
-  const [isRecording, setIsRecording] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const [micSupported, setMicSupported] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<PainInputFormValues>({
@@ -83,6 +81,21 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
 
   const { control, setValue, getValues, trigger, formState: { errors } } = form;
 
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition
+  } = useSpeechRecognition();
+
+  useEffect(() => {
+    if (transcript) {
+      setValue('description', getValues('description') + transcript + '. ', { shouldValidate: true, shouldDirty: true });
+      resetTranscript();
+    }
+  }, [transcript, setValue, getValues, resetTranscript]);
+
+
   const getFunctionUrl = (functionName: string) => {
     const region = REGION;
     const projectId = FIREBASE_CONFIG.projectId;
@@ -94,72 +107,11 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     return `https://${region}-${projectId}.cloudfunctions.net/${functionName}`;
   };
 
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (typeof SpeechRecognition !== 'undefined') {
-      setMicSupported(true);
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-
-      recognition.onresult = (event) => {
-        let finalTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          }
-        }
-        if (finalTranscript) {
-           setValue('description', getValues('description') + finalTranscript + '. ', { shouldValidate: true, shouldDirty: true });
-        }
-      };
-      
-      recognition.onerror = (event) => {
-        let errorMessage = `An error occurred with voice recognition: ${event.error}`;
-        if (event.error === 'network') {
-          errorMessage = 'Network error with voice recognition. Please check your internet connection and try again.';
-        } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          errorMessage = 'Microphone access denied. Please enable microphone permissions in your browser settings.';
-        }
-        
-        toast({
-          title: "Voice Recognition Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
-
-        if (isRecording) setIsRecording(false);
-      };
-
-      recognition.onend = () => {
-        if (isRecording) setIsRecording(false);
-      };
-      
-      recognitionRef.current = recognition;
-    } else {
-        setMicSupported(false);
-    }
-  }, [isRecording, getValues, setValue, toast]);
-
   const handleMicClick = () => {
-    const recognition = recognitionRef.current;
-    if (!recognition) return;
-
-    if (isRecording) {
-      recognition.stop();
-      setIsRecording(false);
+    if (listening) {
+      SpeechRecognition.stopListening();
     } else {
-      try {
-        recognition.start();
-        setIsRecording(true);
-      } catch (error) {
-         toast({
-          title: "Could not start recording",
-          description: "Please ensure microphone permissions are granted and try again.",
-          variant: "destructive",
-        });
-      }
+      SpeechRecognition.startListening({ continuous: true });
     }
   };
 
@@ -335,12 +287,12 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                   onClick={handleMicClick}
                   className={cn(
                     "absolute top-2 right-2 text-muted-foreground",
-                    isRecording && "text-red-500 bg-red-500/10"
+                    listening && "text-red-500 bg-red-500/10"
                   )}
-                  disabled={!micSupported}
-                  title={micSupported ? "Use voice" : "Voice not supported"}
+                  disabled={!browserSupportsSpeechRecognition}
+                  title={browserSupportsSpeechRecognition ? "Use voice" : "Voice not supported"}
                 >
-                  {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  {listening ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </Button>
               </div>
               {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}

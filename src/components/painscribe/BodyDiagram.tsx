@@ -26,10 +26,10 @@ const bodyPartHotspots: { id: BodyPart; x: number; y: number; width: number; hei
   { id: 'pelvis', x: 35, y: 38, width: 30, height: 8, view: 'front' },
   { id: 'left-shoulder', x: 25, y: 16, width: 10, height: 5, view: 'front' },
   { id: 'right-shoulder', x: 65, y: 16, width: 10, height: 5, view: 'front' },
-  { id: 'left-arm', x: 18, y: 18, width: 15, height: 25, view: 'front' },
-  { id: 'right-arm', x: 67, y: 18, width: 15, height: 25, view: 'front' },
-  { id: 'left-hand', x: 15, y: 43, width: 10, height: 8, view: 'front' },
-  { id: 'right-hand', x: 75, y: 43, width: 10, height: 8, view: 'front' },
+  { id: 'left-arm', x: 18, y: 22, width: 15, height: 35, view: 'front' },
+  { id: 'right-arm', x: 67, y: 22, width: 15, height: 35, view: 'front' },
+  { id: 'left-hand', x: 15, y: 57, width: 10, height: 10, view: 'front' },
+  { id: 'right-hand', x: 75, y: 57, width: 10, height: 10, view: 'front' },
   { id: 'left-leg', x: 35, y: 46, width: 15, height: 40, view: 'front' },
   { id: 'right-leg', x: 50, y: 46, width: 15, height: 40, view: 'front' },
   { id: 'left-foot', x: 35, y: 86, width: 15, height: 8, view: 'front' },
@@ -38,10 +38,10 @@ const bodyPartHotspots: { id: BodyPart; x: number; y: number; width: number; hei
   { id: 'head', x: 40, y: 2, width: 20, height: 13, view: 'back' },
   { id: 'upper-back', x: 33, y: 16, width: 34, height: 12, view: 'back' },
   { id: 'lower-back', x: 35, y: 28, width: 30, height: 10, view: 'back' },
-  { id: 'left-arm', x: 18, y: 18, width: 15, height: 25, view: 'back' },
-  { id: 'right-arm', x: 67, y: 18, width: 15, height: 25, view: 'back' },
-  { id: 'left-hand', x: 15, y: 43, width: 10, height: 8, view: 'back' },
-  { id: 'right-hand', x: 75, y: 43, width: 10, height: 8, view: 'back' },
+  { id: 'left-arm', x: 18, y: 22, width: 15, height: 35, view: 'back' },
+  { id: 'right-arm', x: 67, y: 22, width: 15, height: 35, view: 'back' },
+  { id: 'left-hand', x: 15, y: 57, width: 10, height: 10, view: 'back' },
+  { id: 'right-hand', x: 75, y: 57, width: 10, height: 10, view: 'back' },
   { id: 'left-leg', x: 35, y: 46, width: 15, height: 40, view: 'back' },
   { id: 'right-leg', x: 50, y: 46, width: 15, height: 40, view: 'back' },
   { id: 'left-foot', x: 35, y: 86, width: 15, height: 8, view: 'back' },
@@ -67,7 +67,7 @@ export function BodyDiagram({ selectedLocations, onLocationClick, gender }: Body
         <div className="absolute inset-0">
           {bodyPartHotspots.filter(p => p.view === 'front').map((part) => (
             <div
-              key={part.id}
+              key={`${part.id}-front`}
               className={cn(
                 "absolute cursor-pointer rounded-md transition-all bg-primary/20 hover:bg-primary/40",
                 selectedLocations.includes(part.id) && "bg-primary/80"
@@ -89,7 +89,7 @@ export function BodyDiagram({ selectedLocations, onLocationClick, gender }: Body
         <div className="absolute inset-0">
           {bodyPartHotspots.filter(p => p.view === 'back').map((part) => (
             <div
-              key={part.id}
+              key={`${part.id}-back`}
               className={cn(
                 "absolute cursor-pointer rounded-md transition-all bg-primary/20 hover:bg-primary/40",
                 selectedLocations.includes(part.id) && "bg-primary/80"

@@ -63,7 +63,7 @@ export default function Home() {
             <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-16">
                 <div className="flex items-center gap-2">
                     <Image
-                        src="/paindrain-logo.png"
+                        src="images/paindrain-logo.png"
                         alt="PainDrain Logo"
                         width={48}
                         height={48}

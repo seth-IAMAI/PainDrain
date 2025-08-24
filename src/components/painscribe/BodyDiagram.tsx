@@ -61,8 +61,8 @@ const bodyPartHotspots: { id: BodyPart; x: number; y: number; width: number; hei
 
 
 export function BodyDiagram({ selectedLocations, onLocationClick, gender }: BodyDiagramProps) {
-    const frontImage = gender === 'male' ? '/male-front.webp' : '/female-front.webp';
-    const backImage = gender === 'male' ? '/male-back.webp' : '/female-back.webp';
+    const frontImage = gender === 'male' ? 'images/male-front.webp' : 'images/female-front.webp';
+    const backImage = gender === 'male' ? 'images/male-back.webp' : 'images/female-back.webp';
     
     const toggleLocation = (partId: BodyPart) => {
         const newSelectedLocations = selectedLocations.includes(partId)

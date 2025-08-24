@@ -17,7 +17,8 @@ export interface JournalLog {
   timestamp: string;
   notes: string;
   photo?: string; 
-  activity?: string; 
+  activity?: string;
+  intensity?: number;
 }
 
 // The comprehensive data structure for a single, stored pain entry

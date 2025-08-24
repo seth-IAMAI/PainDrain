@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,31 +7,66 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { Activity, Calendar as CalendarIcon, Info, BookUser, Plus, Frown } from 'lucide-react';
 import { StoredPainEntry, JournalLog } from '@/lib/types';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface PainHistoryProps {
     entries: StoredPainEntry[];
     setEntries: (entries: StoredPainEntry[] | ((prev: StoredPainEntry[]) => StoredPainEntry[])) => void;
 }
 
-export function PainHistory({ entries, setEntries }: PainHistoryProps) {
-  const [journalNotes, setJournalNotes] = useState<Record<string, string>>({});
+interface JournalState {
+    notes: string;
+    intensity: number;
+    activity: string;
+}
 
-  const handleNoteChange = (entryId: string, value: string) => {
-    setJournalNotes(prev => ({ ...prev, [entryId]: value }));
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+            <div className="p-2 bg-background border rounded-lg shadow-lg">
+                <p className="font-bold text-sm">{new Date(data.timestamp).toLocaleDateString()}</p>
+                <p className="text-primary">Intensity: {data.intensity}</p>
+                {data.notes && <p className="text-xs mt-1">Notes: {data.notes}</p>}
+                {data.activity && <p className="text-xs">Activity: {data.activity}</p>}
+            </div>
+        );
+    }
+    return null;
+};
+
+
+export function PainHistory({ entries, setEntries }: PainHistoryProps) {
+  const [journalState, setJournalState] = useState<Record<string, JournalState>>({});
+
+  const handleStateChange = (entryId: string, field: keyof JournalState, value: string | number) => {
+    setJournalState(prev => ({ 
+        ...prev, 
+        [entryId]: {
+            ...prev[entryId],
+            notes: prev[entryId]?.notes ?? '',
+            activity: prev[entryId]?.activity ?? '',
+            intensity: prev[entryId]?.intensity ?? 5,
+            [field]: value
+        } 
+    }));
   };
 
   const handleAddLog = (entryId: string) => {
-    const note = journalNotes[entryId];
-    if (!note) return;
+    const currentState = journalState[entryId];
+    if (!currentState || !currentState.notes) return;
 
     const newLog: JournalLog = {
       id: `log_${new Date().toISOString()}`,
       timestamp: new Date().toISOString(),
-      notes: note,
+      notes: currentState.notes,
+      intensity: currentState.intensity,
+      activity: currentState.activity,
     };
 
     setEntries(prevEntries => {
@@ -45,8 +81,28 @@ export function PainHistory({ entries, setEntries }: PainHistoryProps) {
         });
     });
 
-    setJournalNotes(prev => ({ ...prev, [entryId]: '' }));
+    setJournalState(prev => ({ ...prev, [entryId]: { notes: '', intensity: 5, activity: '' } }));
   };
+
+  const getChartData = (entry: StoredPainEntry) => {
+    const initialPoint = {
+        timestamp: entry.timestamp,
+        intensity: entry.painInput.intensity,
+        notes: "Initial Entry: " + entry.painInput.description,
+        activity: "N/A"
+    };
+
+    const journalPoints = entry.journalLogs
+        .filter(log => log.intensity !== undefined)
+        .map(log => ({
+            timestamp: log.timestamp,
+            intensity: log.intensity!,
+            notes: log.notes,
+            activity: log.activity
+        }));
+    
+    return [initialPoint, ...journalPoints].sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }
   
   if (!entries || entries.length === 0) {
     return (
@@ -83,7 +139,10 @@ export function PainHistory({ entries, setEntries }: PainHistoryProps) {
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible className="w-full" defaultValue={entries[0]?.id}>
-            {entries.map((entry) => (
+            {entries.map((entry) => {
+                const chartData = getChartData(entry);
+                const currentJournalEntry = journalState[entry.id] || { notes: '', intensity: 5, activity: '' };
+                return (
               <AccordionItem value={entry.id} key={entry.id}>
                 <AccordionTrigger>
                     <div className="flex justify-between items-center w-full pr-4">
@@ -102,36 +161,26 @@ export function PainHistory({ entries, setEntries }: PainHistoryProps) {
                     </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-6 pt-4">
-                  {/* AI Analysis Section */}
+                  {/* Condition Trend Chart */}
                   <div className="space-y-3 p-4 rounded-lg bg-secondary/30">
-                      <h4 className="font-semibold flex items-center gap-2"><Info className="h-5 w-5 text-primary" />Original AI Analysis</h4>
+                      <h4 className="font-semibold flex items-center gap-2"><Info className="h-5 w-5 text-primary" />Pain Intensity Trend</h4>
                       <p className="text-sm text-muted-foreground italic">"{entry.painInput.description}"</p>
                       <Separator />
-                      <p className="text-sm"><span className="font-medium">Medical Summary:</span> {entry.analysisResult.medicalTranslation}</p>
-                      {entry.analysisResult.diagnosticSuggestions?.length > 0 && (
-                          <div className="pt-4">
-                            <h5 className="font-medium mb-2">Diagnostic Confidence</h5>
-                             <div className="h-[200px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={entry.analysisResult.diagnosticSuggestions} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="diagnosis" tick={{ fontSize: 12 }} interval={0} />
-                                        <YAxis unit="%" />
-                                        <Tooltip
-                                          contentStyle={{
-                                            backgroundColor: 'hsl(var(--background))',
-                                            borderColor: 'hsl(var(--border))'
-                                          }}
-                                          labelStyle={{
-                                            color: 'hsl(var(--foreground))'
-                                          }}
-                                        />
-                                        <Bar dataKey="confidence" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                          </div>
-                      )}
+                      <div className="h-[250px] w-full pt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                    dataKey="timestamp" 
+                                    tickFormatter={(str) => new Date(str).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}
+                                    tick={{ fontSize: 12 }} 
+                                />
+                                <YAxis domain={[0, 10]} unit="/10" />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Line type="monotone" dataKey="intensity" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 5 }} activeDot={{ r: 8 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                   </div>
                   
                   {/* Journaling Section */}
@@ -143,7 +192,9 @@ export function PainHistory({ entries, setEntries }: PainHistoryProps) {
                                 <div key={log.id} className="text-sm relative">
                                     <div className="absolute -left-[30px] top-1.5 h-3 w-3 rounded-full bg-primary" />
                                     <p className="font-medium text-muted-foreground">{new Date(log.timestamp).toLocaleString()}</p>
+                                    {log.intensity && <Badge variant="outline" className="ml-2">Intensity: {log.intensity}</Badge>}
                                     <p>{log.notes}</p>
+                                    {log.activity && <p className="text-xs text-muted-foreground">Activity: {log.activity}</p>}
                                 </div>
                             ))}
                         </div>
@@ -151,20 +202,47 @@ export function PainHistory({ entries, setEntries }: PainHistoryProps) {
                         <p className="text-sm text-muted-foreground pl-7">No journal entries yet. Add one below!</p>
                      )}
 
-                    <div className="pt-4 space-y-2">
-                        <Textarea 
-                            placeholder="How are you feeling now? Any new triggers or relief?" 
-                            value={journalNotes[entry.id] || ''}
-                            onChange={(e) => handleNoteChange(entry.id, e.target.value)}
-                        />
-                        <Button size="sm" onClick={() => handleAddLog(entry.id)} disabled={!journalNotes[entry.id]}>
+                    <div className="pt-4 space-y-4">
+                        <div>
+                            <Label htmlFor={`notes-${entry.id}`} className="font-medium">New Log / Notes</Label>
+                            <Textarea 
+                                id={`notes-${entry.id}`}
+                                placeholder="How are you feeling now? Any new triggers or relief?" 
+                                value={currentJournalEntry.notes}
+                                onChange={(e) => handleStateChange(entry.id, 'notes', e.target.value)}
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div>
+                             <Label htmlFor={`activity-${entry.id}`} className="font-medium">Activity / Trigger</Label>
+                             <Input
+                                id={`activity-${entry.id}`}
+                                placeholder="e.g., Sitting for 2 hours"
+                                value={currentJournalEntry.activity}
+                                onChange={(e) => handleStateChange(entry.id, 'activity', e.target.value)}
+                             />
+                           </div>
+                           <div>
+                                <Label htmlFor={`intensity-${entry.id}`} className="font-medium">Current Intensity</Label>
+                                 <div className="flex items-center gap-2 pt-2">
+                                     <Slider
+                                         id={`intensity-${entry.id}`}
+                                         min={1} max={10} step={1}
+                                         value={[currentJournalEntry.intensity]}
+                                         onValueChange={(val) => handleStateChange(entry.id, 'intensity', val[0])}
+                                     />
+                                    <span className="font-bold text-lg text-primary w-10 text-center">{currentJournalEntry.intensity}</span>
+                                 </div>
+                           </div>
+                        </div>
+                        <Button size="sm" onClick={() => handleAddLog(entry.id)} disabled={!currentJournalEntry.notes}>
                             <Plus className="mr-2 h-4 w-4" /> Add Log
                         </Button>
                     </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
-            ))}
+            )})}
           </Accordion>
         </CardContent>
       </Card>

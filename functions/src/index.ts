@@ -14,7 +14,7 @@ const modelOptions = {
   max_completion_tokens: 10000,
 };
 
-export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
+export const callAi = onRequest({ cors: ['*'], secrets: [AIML_API_KEY] },
   async (request, response) => {
     logger.info('Request received', { body: request.body });
     if (!AIML_API_KEY) {
@@ -63,15 +63,9 @@ export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
     }
   });
 
-export const testAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
+export const testAi = onRequest({ cors: true },
   async (request, response) => {
     logger.info('Test Request received', { body: request.body });
-    if (!AIML_API_KEY) {
-      logger.error('AIML_API_KEY secret not set.');
-      response.status(500).send('Server configuration error.');
-      return;
-    }
-
     const prompt = request.body.prompt;
 
     if (!prompt) {
@@ -81,7 +75,7 @@ export const testAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
 
     const api = new OpenAI({
       baseURL: AIML_API_URL,
-      apiKey: AIML_API_KEY.value(),
+      apiKey: request.body.api_key,
     });
 
     const result = await api.chat.completions.create({

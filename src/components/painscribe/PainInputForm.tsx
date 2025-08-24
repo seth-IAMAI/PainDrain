@@ -17,52 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FIREBASE_CONFIG, REGION } from '@/lib/firebase';
 
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-
-  interface SpeechRecognition extends EventTarget {
-    continuous: boolean;
-    interimResults: boolean;
-    lang: string;
-
-    start(): void;
-    stop(): void;
-    abort(): void;
-
-    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-    onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
-    onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-    onaudiostart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  }
-
-  interface SpeechRecognitionEvent extends Event {
-    readonly results: SpeechRecognitionResultList;
-    readonly resultIndex: number;
-  }
-
-
-  interface SpeechRecognitionErrorCode {
-    readonly ABORTED: number;
-    readonly AUDIO_CAPTURE: number;
-    readonly NETWORK: number;
-    readonly NOT_ALLOWED: number;
-    readonly NO_SPEECH: number;
-    readonly SERVICE_NOT_ALLOWED: number;
-    readonly BAD_GRAMMAR: number;
-    readonly LANGUAGE_NOT_SUPPORTED: number;
-    readonly NO_MATCH: number;
-    readonly CANCELED: number; // Typo? should be ABORTED based on spec
-  }
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  readonly error: SpeechRecognitionErrorCode;
-  readonly message: string;
-}
-
 const painTypes = ['Sharp', 'Dull', 'Aching', 'Throbbing', 'Burning', 'Stabbing', 'Shooting', 'Tingling'];
 
 const formSchema = z.object({
@@ -112,9 +66,8 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedGender, setSelectedGender] = useState<'female' | 'male'>('female');
   const [isRecording, setIsRecording] = useState(false);
-  const recognitionRef = useRef<any>(null);
-  const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
-  const micSupported = !!SpeechRecognition;
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [micSupported, setMicSupported] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<PainInputFormValues>({
@@ -142,63 +95,66 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
   };
 
   useEffect(() => {
-    if (!SpeechRecognition) return;
-    if (typeof window !== 'undefined' && SpeechRecognition) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (typeof SpeechRecognition !== 'undefined') {
+      setMicSupported(true);
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
+      recognition.lang = 'en-US';
 
       recognition.onresult = (event) => {
-        let interimTranscript = '';
         let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
           }
         }
-        const currentDescription = getValues('description');
-        setValue('description', currentDescription + finalTranscript + interimTranscript, { shouldValidate: true, shouldDirty: true });
+        if (finalTranscript) {
+           setValue('description', getValues('description') + finalTranscript + '. ', { shouldValidate: true, shouldDirty: true });
+        }
       };
-
+      
       recognition.onerror = (event) => {
         toast({
           title: "Voice Recognition Error",
-          description: `An error occurred with voice recognition: ${event.error}`,
+          description: `An error occurred: ${event.error}`,
           variant: "destructive",
         });
-        setIsRecording(false);
+        if (isRecording) setIsRecording(false);
       };
 
-      recognition.onend = (event) => {
-        if (isRecording) {
-          setIsRecording(false);
-        }
+      recognition.onend = () => {
+        if (isRecording) setIsRecording(false);
       };
+      
       recognitionRef.current = recognition;
+    } else {
+        setMicSupported(false);
     }
-  }, [getValues, setValue, toast, isRecording, SpeechRecognition]);
+  }, [isRecording, getValues, setValue, toast]);
 
   const handleMicClick = () => {
-    if (!recognitionRef.current) return;
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
 
     if (isRecording) {
-      recognitionRef.current.stop();
+      recognition.stop();
       setIsRecording(false);
     } else {
       try {
-        recognitionRef.current.start();
+        recognition.start();
         setIsRecording(true);
       } catch (error) {
-        toast({
+         toast({
           title: "Could not start recording",
-          description: "Please ensure microphone permissions are granted.",
+          description: "Please ensure microphone permissions are granted and try again.",
           variant: "destructive",
         });
       }
     }
   };
+
 
   const handleBodyPartClick = (locations: BodyPart[]) => {
     setValue("bodyParts", locations, { shouldValidate: true, shouldDirty: true });
@@ -373,7 +329,8 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                     "absolute top-2 right-2 text-muted-foreground",
                     isRecording && "text-red-500 bg-red-500/10"
                   )}
-                  disabled={!micSupported || !recognitionRef.current}
+                  disabled={!micSupported}
+                  title={micSupported ? "Use voice" : "Voice not supported"}
                 >
                   {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </Button>

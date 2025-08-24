@@ -205,6 +205,11 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
       description = "Select the area(s) where you feel pain.";
     }
 
+    if (currentStep === 4) {
+      title = "Pain Intensity";
+      description = "Rate your pain on a scale from 1 to 10.";
+    }
+
     if(isSubmitted) {
       return (
         <CardHeader>

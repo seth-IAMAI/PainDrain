@@ -48,7 +48,7 @@ function generatePrompt(values: PainInputFormValues): string {
       {
         "medicalTranslation": "A concise summary in clinical terms.",
         "diagnosticSuggestions": [
-          { "diagnosis": "Name of condition", "icd10Code": "ICD-10", "confidence": percentage, "description": "Brief description." }
+          { "diagnosis": "Name of condition", "icd10Code": "ICD-10", "confidence": percentage, "description": "Brief description.", "additional_description": "Additional description." }
         ],
         "clinicalTerms": ["term1", "term2"],
         "recommendedQuestions": ["question1", "question2"],

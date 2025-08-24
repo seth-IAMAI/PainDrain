@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { FIREBASE_CONFIG, REGION } from '@/lib/firebase';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { PainInputData } from '@/lib/types';
-
+ 
 const painTypes = ['Sharp', 'Dull', 'Aching', 'Throbbing', 'Burning', 'Stabbing', 'Shooting', 'Tingling'];
 
 const formSchema = z.object({

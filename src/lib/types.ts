@@ -7,7 +7,7 @@ export type BodyPart = AppBodyPart;
 export interface PainInputData {
   description: string;
   intensity: number;
-  painTypes: string[];
+  painTypes?: string[];
   bodyParts: string[];
 }
 

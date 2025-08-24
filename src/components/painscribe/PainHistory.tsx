@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Activity, Calendar as CalendarIcon, Info, BookUser, Plus, Frown } from 'lucide-react';
 import { StoredPainEntry, JournalLog } from '@/lib/types';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
 interface PainHistoryProps {
@@ -107,7 +108,30 @@ export function PainHistory({ entries, setEntries }: PainHistoryProps) {
                       <p className="text-sm text-muted-foreground italic">"{entry.painInput.description}"</p>
                       <Separator />
                       <p className="text-sm"><span className="font-medium">Medical Summary:</span> {entry.analysisResult.medicalTranslation}</p>
-                      {entry.analysisResult.diagnosticSuggestions?.[0] && <p className="text-sm"><span className="font-medium">Top Suggestion:</span> {entry.analysisResult.diagnosticSuggestions[0].diagnosis} ({entry.analysisResult.diagnosticSuggestions[0].icd10Code})</p>}
+                      {entry.analysisResult.diagnosticSuggestions?.length > 0 && (
+                          <div className="pt-4">
+                            <h5 className="font-medium mb-2">Diagnostic Confidence</h5>
+                             <div className="h-[200px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={entry.analysisResult.diagnosticSuggestions} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="diagnosis" tick={{ fontSize: 12 }} interval={0} />
+                                        <YAxis unit="%" />
+                                        <Tooltip
+                                          contentStyle={{
+                                            backgroundColor: 'hsl(var(--background))',
+                                            borderColor: 'hsl(var(--border))'
+                                          }}
+                                          labelStyle={{
+                                            color: 'hsl(var(--foreground))'
+                                          }}
+                                        />
+                                        <Bar dataKey="confidence" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                          </div>
+                      )}
                   </div>
                   
                   {/* Journaling Section */}

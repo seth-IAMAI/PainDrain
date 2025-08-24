@@ -352,7 +352,6 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
 
           {currentStep === 2 && (
             <div className="space-y-3 animate-in fade-in">
-              <Label className="font-semibold text-lg">Where do you feel the pain?</Label>
                <div className="flex gap-2">
                 <Button 
                   type="button" 
@@ -371,6 +370,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                   Male
                 </Button>
               </div>
+              <Label className="font-semibold text-lg">Where do you feel the pain?</Label>
               <Controller
                 name="bodyParts"
                 control={control}

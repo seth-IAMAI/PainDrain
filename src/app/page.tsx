@@ -8,15 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PainHistory } from '@/components/painscribe/PainHistory';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { StoredPainEntry, PainInputData } from '@/lib/types';
 
 export default function Home() {
-  const [result, setResult] = useState<any | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [currentPainInput, setCurrentPainInput] = useState<PainInputData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState("entry");
-
+  const [painHistory, setPainHistory] = useLocalStorage<StoredPainEntry[]>('painHistory', []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,14 +30,25 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (isSubmitted) {
+    if (isSubmitted && analysisResult && currentPainInput) {
+      const newEntry: StoredPainEntry = {
+        id: `entry_${new Date().toISOString()}`,
+        timestamp: new Date().toISOString(),
+        painInput: currentPainInput,
+        analysisResult: analysisResult,
+        journalLogs: [],
+      };
+      setPainHistory(prev => [newEntry, ...prev]);
       setActiveTab("analysis");
     }
-  }, [isSubmitted]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysisResult, isSubmitted]);
+
 
   const handleNewEntry = () => {
     setIsSubmitted(false);
-    setResult(null);
+    setAnalysisResult(null);
+    setCurrentPainInput(null);
     setError(null);
     setActiveTab("entry");
   }
@@ -51,8 +65,8 @@ export default function Home() {
                     <Image
                         src="/paindrain-logo.png"
                         alt="PainDrain Logo"
-                        width={32}
-                        height={32}
+                        width={48}
+                        height={48}
                     />
                     <h1 className="text-xl font-bold">PainDrain</h1>
                 </div>
@@ -73,24 +87,28 @@ export default function Home() {
 
           <TabsContent value="entry">
               <PainInputForm
-                setResult={setResult}
+                setResult={setAnalysisResult}
                 setIsLoading={setIsLoading}
                 setError={setError}
                 isLoading={isLoading}
                 setIsSubmitted={setIsSubmitted}
                 isSubmitted={isSubmitted}
+                setCurrentPainInput={setCurrentPainInput}
               />
           </TabsContent>
 
           <TabsContent value="analysis">
               <MedicalOutputDashboard
-                  result={result}
+                  result={analysisResult}
                   isLoading={isLoading}
                   error={error}
               />
           </TabsContent>
             <TabsContent value="timeline">
-                <PainHistory />
+                <PainHistory 
+                  entries={painHistory}
+                  setEntries={setPainHistory}
+                />
             </TabsContent>
          </Tabs>
       </main>

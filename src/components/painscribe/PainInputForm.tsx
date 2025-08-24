@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FIREBASE_CONFIG, REGION } from '@/lib/firebase';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-
+import { PainInputData } from '@/lib/types';
+ 
 const painTypes = ['Sharp', 'Dull', 'Aching', 'Throbbing', 'Burning', 'Stabbing', 'Shooting', 'Tingling'];
 
 const formSchema = z.object({
@@ -35,6 +36,7 @@ interface PainInputFormProps {
   setError: (error: string | null) => void;
   isLoading: boolean;
   setIsSubmitted: (isSubmitted: boolean) => void;
+  setCurrentPainInput: (data: PainInputData) => void;
   isSubmitted?: boolean;
 }
 
@@ -63,7 +65,7 @@ function generatePrompt(values: PainInputFormValues): string {
     `;
 }
 
-export function PainInputForm({ setResult, setIsLoading, setError, isLoading, setIsSubmitted, isSubmitted }: PainInputFormProps) {
+export function PainInputForm({ setResult, setIsLoading, setError, isLoading, setIsSubmitted, isSubmitted, setCurrentPainInput }: PainInputFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedGender, setSelectedGender] = useState<'female' | 'male'>('female');
   const { toast } = useToast();
@@ -128,7 +130,6 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
     setIsLoading(true);
     setError(null);
     setResult(null);
-    setIsSubmitted(true);
 
     const prompt = generatePrompt(values);
 
@@ -153,11 +154,14 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
         const errorData = await callAiResponse.text();
         throw new Error(`API returned ${callAiResponse.status}: ${errorData}`);
       }
-
+      
       const data = await callAiResponse.json();
-
       const content = JSON.parse(data.choices[0].message.content);
+      
       setResult(content);
+      setCurrentPainInput(values);
+      setIsSubmitted(true);
+
 
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -167,6 +171,7 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
         description: errorMsg,
         variant: "destructive",
       });
+      setIsSubmitted(false);
     } finally {
       setIsLoading(false);
     }
@@ -301,14 +306,16 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button 
                     type="button" 
-                    className={cn("w-full h-12 text-lg", selectedGender === 'female' ? 'outline' : 'bg-gray-300 text-white')}
+                    className={cn("w-full h-12 text-lg", selectedGender === 'female' ? '' : 'bg-gray-300 text-white')}
+                    variant={selectedGender === 'female' ? 'outline' : 'default'}
                     onClick={() => handleGenderSelect('female')}
                   >
                     Female
                   </Button>
                   <Button 
                     type="button" 
-                    className={cn("w-full h-12 text-lg", selectedGender === 'male' ? 'outline' : 'bg-gray-300 text-white')}
+                    className={cn("w-full h-12 text-lg", selectedGender === 'male' ? '' : 'bg-gray-300 text-white')}
+                    variant={selectedGender === 'male' ? 'outline' : 'default'}
                     onClick={() => handleGenderSelect('male')}                 
                   >
                     Male
@@ -330,11 +337,11 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
                       onLocationClick={handleBodyPartClick} />
                   )}
                 />
-                {getValues('bodyParts').length > 0 && (
+              </div>
+               {getValues('bodyParts').length > 0 && (
                   <p className="text-sm text-muted-foreground">Selected: {getValues('bodyParts').join(', ')}</p>
                 )}
-                {errors.bodyParts && <p className="text-sm text-destructive">{errors.bodyParts.message}</p>}
-              </div>
+              {errors.bodyParts && <p className="text-sm text-destructive">{errors.bodyParts.message}</p>}
             </div>
           )}
 

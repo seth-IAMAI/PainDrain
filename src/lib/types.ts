@@ -27,6 +27,7 @@ export interface StoredPainEntry {
   painInput: PainInputData;
   analysisResult: any; // The raw JSON output from the AI analysis
   journalLogs: JournalLog[];
+  userInput?: PainInputData; // Keep the original input
 }
 
 

@@ -51,17 +51,19 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
         const imgWidth = canvas.width;
         const imgHeight = canvas.height;
         
-        const ratio = imgWidth / imgHeight;
+        const ratio = imgHeight / imgWidth;
         
         let newImgWidth = pdfWidth;
-        let newImgHeight = newImgWidth / ratio;
+        let newImgHeight = newImgWidth * ratio;
 
         if (newImgHeight > pdfHeight) {
             newImgHeight = pdfHeight;
-            newImgWidth = newImgHeight * ratio;
+            newImgWidth = newImgHeight / ratio;
         }
+
+        const x = (pdfWidth - newImgWidth) / 2;
         
-        pdf.addImage(imgData, 'PNG', 0, 0, newImgWidth, newImgHeight);
+        pdf.addImage(imgData, 'PNG', x, 0, newImgWidth, newImgHeight);
         pdf.save('PainDrain-Analysis.pdf');
 
     } catch (error) {
@@ -185,7 +187,7 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
 
   return (
     <Card className="w-full">
-      <div ref={reportRef}>
+       <div ref={reportRef}>
         <CardHeader>
             <CardTitle className="text-2xl">AI-Powered Medical Analysis</CardTitle>
             <CardDescription>Review the AI-generated insights based on your description.</CardDescription>

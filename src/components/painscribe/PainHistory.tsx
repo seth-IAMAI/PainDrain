@@ -1,4 +1,3 @@
-
 'use client';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,68 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { TrendingUp, Activity, Calendar as CalendarIcon, MapPin, Info, BookUser, Plus } from 'lucide-react';
-import { StoredPainEntry } from '@/lib/types';
+import { Activity, Calendar as CalendarIcon, Info, BookUser, Plus, Frown } from 'lucide-react';
+import { StoredPainEntry, JournalLog } from '@/lib/types';
 
 
-const MOCK_STORED_ENTRIES: StoredPainEntry[] = [
-  {
-    id: 'entry1',
-    timestamp: '2024-07-21T10:00:00Z',
-    painInput: {
-      description: "A sharp, stabbing pain in my lower back that gets worse when I sit for too long. It feels like a hot poker.",
-      intensity: 7,
-      bodyParts: ['lower-back'],
-      painTypes: ['Sharp', 'Stabbing', 'Burning'],
-    },
-    analysisResult: {
-      medicalTranslation: "Patient reports acute, localized pain in the lumbar region, characterized as sharp, stabbing, and radiating heat. Pain is exacerbated by prolonged periods of sitting.",
-      diagnosticSuggestions: [{ diagnosis: "Sciatica", icd10Code: "M54.3", confidence: 85 }],
-      urgencyLevel: 'medium',
-    },
-    journalLogs: [
-      { id: 'log1', timestamp: '2024-07-21T18:00:00Z', notes: "Took an ibuprofen, pain went down to a 4/10." },
-      { id: 'log2', timestamp: '2024-07-22T09:00:00Z', notes: "Woke up feeling stiff, but the sharp pain is gone. It's more of a dull ache now." },
-    ]
-  },
-  {
-    id: 'entry2',
-    timestamp: '2024-07-23T14:30:00Z',
-    painInput: {
-      description: "Throbbing headache behind my right eye. It's sensitive to light.",
-      intensity: 8,
-      bodyParts: ['head'],
-      painTypes: ['Throbbing'],
-    },
-    analysisResult: {
-      medicalTranslation: "Patient presents with symptoms consistent with a migraine, including unilateral, pulsating headache localized retro-orbitally and associated photophobia.",
-      diagnosticSuggestions: [{ diagnosis: "Migraine with aura", icd10Code: "G43.1", confidence: 92 }],
-      urgencyLevel: 'high',
-    },
-    journalLogs: [
-       { id: 'log3', timestamp: '2024-07-23T16:00:00Z', notes: "Tried lying down in a dark room. It helped a little." }
-    ]
-  },
-   {
-    id: 'entry3',
-    timestamp: '2024-07-26T08:00:00Z',
-    painInput: {
-      description: "My left knee feels sharp and gives out when I walk up stairs.",
-      intensity: 7,
-      bodyParts: ['left-leg'],
-      painTypes: ['Sharp', 'Stabbing'],
-    },
-    analysisResult: {
-      medicalTranslation: "Patient reports acute pain in the left knee, described as sharp and stabbing, leading to instability, particularly during stair climbing.",
-      diagnosticSuggestions: [{ diagnosis: "Meniscus Tear", icd10Code: "S83.2", confidence: 78 }],
-      urgencyLevel: 'medium',
-    },
-    journalLogs: []
-  },
-];
+interface PainHistoryProps {
+    entries: StoredPainEntry[];
+    setEntries: (entries: StoredPainEntry[] | ((prev: StoredPainEntry[]) => StoredPainEntry[])) => void;
+}
 
-
-export function PainHistory() {
+export function PainHistory({ entries, setEntries }: PainHistoryProps) {
   const [journalNotes, setJournalNotes] = useState<Record<string, string>>({});
 
   const handleNoteChange = (entryId: string, value: string) => {
@@ -78,11 +25,49 @@ export function PainHistory() {
   const handleAddLog = (entryId: string) => {
     const note = journalNotes[entryId];
     if (!note) return;
-    // In a real app, you'd save this to a database.
-    console.log(`Adding log for ${entryId}: ${note}`);
-    // For now, we just clear the textarea
+
+    const newLog: JournalLog = {
+      id: `log_${new Date().toISOString()}`,
+      timestamp: new Date().toISOString(),
+      notes: note,
+    };
+
+    setEntries(prevEntries => {
+        return prevEntries.map(entry => {
+            if (entry.id === entryId) {
+                return {
+                    ...entry,
+                    journalLogs: [...entry.journalLogs, newLog]
+                };
+            }
+            return entry;
+        });
+    });
+
     setJournalNotes(prev => ({ ...prev, [entryId]: '' }));
   };
+  
+  if (!entries || entries.length === 0) {
+    return (
+       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity /> Pain History & Journal
+          </CardTitle>
+          <CardDescription>
+            Review your past pain entries and add follow-up notes to track your journey.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="flex flex-col items-center justify-center min-h-[200px] text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg">
+                <Frown className="h-12 w-12 mb-4" />
+                <h3 className="text-xl font-semibold">No History Yet</h3>
+                <p className="mt-2">Your timeline is empty. Submit a "New Entry" to start tracking your pain.</p>
+            </div>
+        </CardContent>
+       </Card>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -96,17 +81,17 @@ export function PainHistory() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Accordion type="single" collapsible className="w-full">
-            {MOCK_STORED_ENTRIES.map((entry) => (
+          <Accordion type="single" collapsible className="w-full" defaultValue={entries[0]?.id}>
+            {entries.map((entry) => (
               <AccordionItem value={entry.id} key={entry.id}>
                 <AccordionTrigger>
                     <div className="flex justify-between items-center w-full pr-4">
                         <div className="flex items-center gap-4">
                             <CalendarIcon className="h-5 w-5 text-muted-foreground" />
                             <div className="text-left">
-                                <p className="font-semibold capitalize">{entry.painInput.bodyParts.join(', ').replace('-', ' ')}</p>
+                                <p className="font-semibold capitalize">{entry.painInput.bodyParts.join(', ').replace(/-/g, ' ')}</p>
                                 <p className="text-sm text-muted-foreground">
-                                    {new Date(entry.timestamp).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    {new Date(entry.timestamp).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                                 </p>
                             </div>
                         </div>
@@ -122,7 +107,7 @@ export function PainHistory() {
                       <p className="text-sm text-muted-foreground italic">"{entry.painInput.description}"</p>
                       <Separator />
                       <p className="text-sm"><span className="font-medium">Medical Summary:</span> {entry.analysisResult.medicalTranslation}</p>
-                      <p className="text-sm"><span className="font-medium">Top Suggestion:</span> {entry.analysisResult.diagnosticSuggestions[0].diagnosis} ({entry.analysisResult.diagnosticSuggestions[0].icd10Code})</p>
+                      {entry.analysisResult.diagnosticSuggestions?.[0] && <p className="text-sm"><span className="font-medium">Top Suggestion:</span> {entry.analysisResult.diagnosticSuggestions[0].diagnosis} ({entry.analysisResult.diagnosticSuggestions[0].icd10Code})</p>}
                   </div>
                   
                   {/* Journaling Section */}

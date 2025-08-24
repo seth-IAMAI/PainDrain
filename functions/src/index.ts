@@ -14,7 +14,14 @@ const modelOptions = {
   max_completion_tokens: 10000,
 };
 
-export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
+const corsOptions = {
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}
+
+export const callAi = onRequest({ ...corsOptions, secrets: [AIML_API_KEY] },
   async (request, response) => {
     logger.info('Request received', { body: request.body });
     if (!AIML_API_KEY) {
@@ -63,7 +70,7 @@ export const callAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
     }
   });
 
-export const testAi = onRequest({ cors: true, secrets: [AIML_API_KEY] },
+export const testAi = onRequest({ ...corsOptions, secrets: [AIML_API_KEY] },
   async (request, response) => {
     logger.info('Test Request received', { body: request.body });
     if (!AIML_API_KEY) {

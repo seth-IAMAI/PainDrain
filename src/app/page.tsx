@@ -1,13 +1,27 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PainInputForm } from '@/components/painscribe/PainInputForm';
 import { MedicalOutputDashboard } from '@/components/painscribe/MedicalOutputDashboard';
+import { SplashScreen } from '@/components/painscribe/SplashScreen';
 
 export default function Home() {
   const [result, setResult] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showSplash) {
+    return <SplashScreen />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-200 text-foreground">

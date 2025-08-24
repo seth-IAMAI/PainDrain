@@ -33,24 +33,42 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
     if (!reportRef.current) return;
     setIsExporting(true);
     try {
-      const canvas = await html2canvas(reportRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'px', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = canvasWidth / canvasHeight;
-      const width = pdfWidth;
-      const height = width / ratio;
+        const canvas = await html2canvas(reportRef.current, {
+            scale: 2,
+            useCORS: true, 
+        });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: 'a4'
+        });
 
-      let finalHeight = height;
-      if (height > pdfHeight) {
-        finalHeight = pdfHeight;
-      }
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, width, finalHeight);
-      pdf.save('PainDrain-Analysis.pdf');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        
+        const ratio = imgWidth / imgHeight;
+        
+        let newImgWidth = pdfWidth;
+        let newImgHeight = newImgWidth / ratio;
+
+        if (newImgHeight > pdfHeight) {
+            newImgHeight = pdfHeight;
+            newImgWidth = newImgHeight * ratio;
+        }
+
+        let position = 0;
+        if (newImgHeight < pdfHeight) {
+            position = (pdfHeight - newImgHeight) / 2;
+        }
+
+        pdf.addImage(imgData, 'PNG', (pdfWidth - newImgWidth) / 2, position, newImgWidth, newImgHeight);
+        pdf.save('PainDrain-Analysis.pdf');
+
     } catch (error) {
         console.error("Failed to export to PDF", error);
     } finally {

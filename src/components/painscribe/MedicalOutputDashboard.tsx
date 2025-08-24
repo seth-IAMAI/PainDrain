@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, AlertCircle, FileDown, Clipboard, Check, Sparkles } from 'lucide-react';
 import { ConditionSummaryDialog } from './ConditionSummaryDialog';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface MedicalOutputDashboardProps {
   result: any | null;
@@ -18,12 +20,62 @@ interface MedicalOutputDashboardProps {
 export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutputDashboardProps) {
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<string | null>(null);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = (text: string, section: string) => {
     navigator.clipboard.writeText(text);
     setCopiedSection(section);
     setTimeout(() => setCopiedSection(null), 2000);
   };
+
+  const handleExport = async () => {
+    if (!reportRef.current) return;
+    setIsExporting(true);
+    try {
+        const canvas = await html2canvas(reportRef.current, {
+            scale: 2,
+            useCORS: true, 
+        });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: 'a4'
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        
+        const ratio = imgWidth / imgHeight;
+        
+        let newImgWidth = pdfWidth;
+        let newImgHeight = newImgWidth / ratio;
+
+        if (newImgHeight > pdfHeight) {
+            newImgHeight = pdfHeight;
+            newImgWidth = newImgHeight * ratio;
+        }
+
+        let position = 0;
+        if (newImgHeight < pdfHeight) {
+            position = (pdfHeight - newImgHeight) / 2;
+        }
+
+        pdf.addImage(imgData, 'PNG', (pdfWidth - newImgWidth) / 2, position, newImgWidth, newImgHeight);
+        pdf.save('PainDrain-Analysis.pdf');
+
+    } catch (error) {
+        console.error("Failed to export to PDF", error);
+    } finally {
+        setIsExporting(false);
+    }
+  };
+
 
   const getUrgencyBadgeVariant = (urgency: 'low' | 'medium' | 'high' | undefined) => {
     switch (urgency) {
@@ -73,7 +125,6 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
     }
 
     return (
-      <>
         <CardContent className="space-y-6 pt-6">
             <div className="flex justify-between items-start">
               <h3 className="text-lg font-semibold">Medical Summary</h3>
@@ -134,23 +185,26 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
               </div>
             </>}
         </CardContent>
-        <CardFooter>
-            <Button className="w-full" disabled>
-                <FileDown className="mr-2 h-4 w-4" />
-                Export as PDF (Coming Soon)
-            </Button>
-        </CardFooter>
-      </>
     );
   };
 
   return (
     <Card className="h-fit">
-      <CardHeader>
-        <CardTitle className="text-2xl">AI-Powered Medical Analysis</CardTitle>
-        <CardDescription>Review the AI-generated insights based on your description.</CardDescription>
-      </CardHeader>
-      {renderContent()}
+      <div ref={reportRef}>
+        <CardHeader>
+            <CardTitle className="text-2xl">AI-Powered Medical Analysis</CardTitle>
+            <CardDescription>Review the AI-generated insights based on your description.</CardDescription>
+        </CardHeader>
+        {renderContent()}
+      </div>
+      {result && !isLoading && (
+        <CardFooter>
+            <Button className="w-full" onClick={handleExport} disabled={isExporting}>
+                {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                {isExporting ? 'Exporting...' : 'Export as PDF'}
+            </Button>
+        </CardFooter>
+      )}
       {selectedDiagnosis && <ConditionSummaryDialog icd10Code={selectedDiagnosis} onClose={() => setSelectedDiagnosis(null)} />}
     </Card>
   );

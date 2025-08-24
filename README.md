@@ -73,12 +73,9 @@ cp .env.example .env
 npm run dev
 ```
 
-### Environment Variables
+### Environment Variables (GCP Secrets)
 
-```env
-REACT_APP_GPT5_API_KEY=your_aimlapi_key_here
-REACT_APP_MEDICAL_DB_URL=your_medical_database_url
-REACT_APP_API_BASE_URL=http://localhost:3000/api
+```AIML_API_KEY=your-AI/ML-API-key```
 ```
 
 ## 📝 API Documentation

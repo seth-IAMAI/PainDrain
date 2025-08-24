@@ -1,109 +1,162 @@
 
 'use client';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Activity, Calendar as CalendarIcon, MapPin } from 'lucide-react';
-import { PainEntry } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { TrendingUp, Activity, Calendar as CalendarIcon, MapPin, Info, BookUser, Plus } from 'lucide-react';
+import { StoredPainEntry } from '@/lib/types';
 
-const MOCK_PAIN_HISTORY: PainEntry[] = [
-  { date: '2024-07-21', intensity: 7, bodyPart: 'lower-back', types: ['Dull', 'Aching'], trigger: 'Sitting too long' },
-  { date: '2024-07-22', intensity: 5, bodyPart: 'lower-back', types: ['Dull'], trigger: 'Stretching' },
-  { date: '2024-07-23', intensity: 8, bodyPart: 'head', types: ['Throbbing'], trigger: 'Stress' },
-  { date: '2024-07-24', intensity: 6, bodyPart: 'lower-back', types: ['Aching'], trigger: 'Lifting heavy object' },
-  { date: '2024-07-25', intensity: 4, bodyPart: 'head', types: ['Dull'], trigger: 'Medication' },
-  { date: '2024-07-26', intensity: 7, bodyPart: 'left-knee', types: ['Sharp', 'Stabbing'], trigger: 'Walking upstairs' },
-  { date: '2024-07-27', intensity: 5, bodyPart: 'left-knee', types: ['Aching'], trigger: 'Rest' },
+
+const MOCK_STORED_ENTRIES: StoredPainEntry[] = [
+  {
+    id: 'entry1',
+    timestamp: '2024-07-21T10:00:00Z',
+    painInput: {
+      description: "A sharp, stabbing pain in my lower back that gets worse when I sit for too long. It feels like a hot poker.",
+      intensity: 7,
+      bodyParts: ['lower-back'],
+      painTypes: ['Sharp', 'Stabbing', 'Burning'],
+    },
+    analysisResult: {
+      medicalTranslation: "Patient reports acute, localized pain in the lumbar region, characterized as sharp, stabbing, and radiating heat. Pain is exacerbated by prolonged periods of sitting.",
+      diagnosticSuggestions: [{ diagnosis: "Sciatica", icd10Code: "M54.3", confidence: 85 }],
+      urgencyLevel: 'medium',
+    },
+    journalLogs: [
+      { id: 'log1', timestamp: '2024-07-21T18:00:00Z', notes: "Took an ibuprofen, pain went down to a 4/10." },
+      { id: 'log2', timestamp: '2024-07-22T09:00:00Z', notes: "Woke up feeling stiff, but the sharp pain is gone. It's more of a dull ache now." },
+    ]
+  },
+  {
+    id: 'entry2',
+    timestamp: '2024-07-23T14:30:00Z',
+    painInput: {
+      description: "Throbbing headache behind my right eye. It's sensitive to light.",
+      intensity: 8,
+      bodyParts: ['head'],
+      painTypes: ['Throbbing'],
+    },
+    analysisResult: {
+      medicalTranslation: "Patient presents with symptoms consistent with a migraine, including unilateral, pulsating headache localized retro-orbitally and associated photophobia.",
+      diagnosticSuggestions: [{ diagnosis: "Migraine with aura", icd10Code: "G43.1", confidence: 92 }],
+      urgencyLevel: 'high',
+    },
+    journalLogs: [
+       { id: 'log3', timestamp: '2024-07-23T16:00:00Z', notes: "Tried lying down in a dark room. It helped a little." }
+    ]
+  },
+   {
+    id: 'entry3',
+    timestamp: '2024-07-26T08:00:00Z',
+    painInput: {
+      description: "My left knee feels sharp and gives out when I walk up stairs.",
+      intensity: 7,
+      bodyParts: ['left-leg'],
+      painTypes: ['Sharp', 'Stabbing'],
+    },
+    analysisResult: {
+      medicalTranslation: "Patient reports acute pain in the left knee, described as sharp and stabbing, leading to instability, particularly during stair climbing.",
+      diagnosticSuggestions: [{ diagnosis: "Meniscus Tear", icd10Code: "S83.2", confidence: 78 }],
+      urgencyLevel: 'medium',
+    },
+    journalLogs: []
+  },
 ];
 
 
-const chartConfig = {
-  intensity: {
-    label: "Pain Intensity",
-    color: "hsl(var(--primary))",
-  },
-} satisfies ChartConfig
-
 export function PainHistory() {
+  const [journalNotes, setJournalNotes] = useState<Record<string, string>>({});
 
-  const chartData = MOCK_PAIN_HISTORY.map(entry => ({
-    date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    intensity: entry.intensity,
-  }));
+  const handleNoteChange = (entryId: string, value: string) => {
+    setJournalNotes(prev => ({ ...prev, [entryId]: value }));
+  };
+
+  const handleAddLog = (entryId: string) => {
+    const note = journalNotes[entryId];
+    if (!note) return;
+    // In a real app, you'd save this to a database.
+    console.log(`Adding log for ${entryId}: ${note}`);
+    // For now, we just clear the textarea
+    setJournalNotes(prev => ({ ...prev, [entryId]: '' }));
+  };
 
   return (
     <div className="space-y-6">
-      <Card>
+       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp /> Pain Intensity Over Time
+            <Activity /> Pain History & Journal
           </CardTitle>
           <CardDescription>
-            Your daily logged pain intensity for the last 7 entries.
+            Review your past pain entries and add follow-up notes to track your journey.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[250px] w-full">
-            <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-              />
-              <YAxis domain={[0, 10]} />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="dot" />}
-              />
-              <Bar dataKey="intensity" fill="var(--color-intensity)" radius={4} />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity /> Detailed Pain Log
-          </CardTitle>
-          <CardDescription>
-            A detailed history of your pain entries.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><CalendarIcon className="inline-block mr-1 h-4 w-4" />Date</TableHead>
-                <TableHead><MapPin className="inline-block mr-1 h-4 w-4" />Body Part</TableHead>
-                <TableHead>Intensity</TableHead>
-                <TableHead>Pain Types</TableHead>
-                <TableHead>Potential Trigger</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {MOCK_PAIN_HISTORY.map((entry, index) => (
-                <TableRow key={index}>
-                  <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
-                  <TableCell className="capitalize">{entry.bodyPart.replace('-', ' ')}</TableCell>
-                  <TableCell>
-                    <Badge variant={entry.intensity > 6 ? 'destructive' : entry.intensity > 3 ? 'secondary' : 'outline'}>
-                      {entry.intensity}/10
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {entry.types.map(t => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
+          <Accordion type="single" collapsible className="w-full">
+            {MOCK_STORED_ENTRIES.map((entry) => (
+              <AccordionItem value={entry.id} key={entry.id}>
+                <AccordionTrigger>
+                    <div className="flex justify-between items-center w-full pr-4">
+                        <div className="flex items-center gap-4">
+                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                            <div className="text-left">
+                                <p className="font-semibold capitalize">{entry.painInput.bodyParts.join(', ').replace('-', ' ')}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {new Date(entry.timestamp).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                </p>
+                            </div>
+                        </div>
+                        <Badge variant={entry.painInput.intensity > 6 ? 'destructive' : entry.painInput.intensity > 3 ? 'secondary' : 'outline'}>
+                            Intensity: {entry.painInput.intensity}/10
+                        </Badge>
                     </div>
-                  </TableCell>
-                  <TableCell>{entry.trigger}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-6 pt-4">
+                  {/* AI Analysis Section */}
+                  <div className="space-y-3 p-4 rounded-lg bg-secondary/30">
+                      <h4 className="font-semibold flex items-center gap-2"><Info className="h-5 w-5 text-primary" />Original AI Analysis</h4>
+                      <p className="text-sm text-muted-foreground italic">"{entry.painInput.description}"</p>
+                      <Separator />
+                      <p className="text-sm"><span className="font-medium">Medical Summary:</span> {entry.analysisResult.medicalTranslation}</p>
+                      <p className="text-sm"><span className="font-medium">Top Suggestion:</span> {entry.analysisResult.diagnosticSuggestions[0].diagnosis} ({entry.analysisResult.diagnosticSuggestions[0].icd10Code})</p>
+                  </div>
+                  
+                  {/* Journaling Section */}
+                  <div className="space-y-3 p-4 rounded-lg bg-secondary/30">
+                    <h4 className="font-semibold flex items-center gap-2"><BookUser className="h-5 w-5 text-primary" />Follow-up Journal</h4>
+                     {entry.journalLogs.length > 0 ? (
+                        <div className="space-y-3 pl-6 border-l-2 border-primary/50">
+                            {entry.journalLogs.map(log => (
+                                <div key={log.id} className="text-sm relative">
+                                    <div className="absolute -left-[30px] top-1.5 h-3 w-3 rounded-full bg-primary" />
+                                    <p className="font-medium text-muted-foreground">{new Date(log.timestamp).toLocaleString()}</p>
+                                    <p>{log.notes}</p>
+                                </div>
+                            ))}
+                        </div>
+                     ) : (
+                        <p className="text-sm text-muted-foreground pl-7">No journal entries yet. Add one below!</p>
+                     )}
+
+                    <div className="pt-4 space-y-2">
+                        <Textarea 
+                            placeholder="How are you feeling now? Any new triggers or relief?" 
+                            value={journalNotes[entry.id] || ''}
+                            onChange={(e) => handleNoteChange(entry.id, e.target.value)}
+                        />
+                        <Button size="sm" onClick={() => handleAddLog(entry.id)} disabled={!journalNotes[entry.id]}>
+                            <Plus className="mr-2 h-4 w-4" /> Add Log
+                        </Button>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </CardContent>
       </Card>
     </div>

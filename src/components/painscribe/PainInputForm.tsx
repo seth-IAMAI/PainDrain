@@ -109,6 +109,7 @@ function generatePrompt(values: PainInputFormValues): string {
 
 export function PainInputForm({ setResult, setIsLoading, setError, isLoading, setIsSubmitted, isSubmitted }: PainInputFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedGender, setSelectedGender] = useState<'female' | 'male'>('female');
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
   const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -352,11 +353,32 @@ export function PainInputForm({ setResult, setIsLoading, setError, isLoading, se
           {currentStep === 2 && (
             <div className="space-y-3 animate-in fade-in">
               <Label className="font-semibold text-lg">Where do you feel the pain?</Label>
+               <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant={selectedGender === 'female' ? 'secondary' : 'outline'}
+                  onClick={() => setSelectedGender('female')}
+                  className="w-full"
+                >
+                  Female
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={selectedGender === 'male' ? 'secondary' : 'outline'}
+                  onClick={() => setSelectedGender('male')}
+                  className="w-full"
+                >
+                  Male
+                </Button>
+              </div>
               <Controller
                 name="bodyParts"
                 control={control}
                 render={({ field }) => (
-                  <BodyDiagram selectedLocations={field.value as BodyPart[]} onLocationClick={handleBodyPartClick} />
+                  <BodyDiagram 
+                    gender={selectedGender}
+                    selectedLocations={field.value as BodyPart[]} 
+                    onLocationClick={handleBodyPartClick} />
                 )}
               />
               {getValues('bodyParts').length > 0 && (

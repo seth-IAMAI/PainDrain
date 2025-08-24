@@ -19,9 +19,12 @@ interface MedicalOutputDashboardProps {
 
 export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutputDashboardProps) {
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<{
-    icd10Code: string | null;
-    additional_description: string | null;
-  }>({ icd10Code: null, additional_description: null });
+    icd10Code: string;
+    additional_description?: string;
+  }>({
+    icd10Code: '',
+    additional_description: undefined,
+  });
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
@@ -145,7 +148,7 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
                     <div key={index} className="p-3 border rounded-lg bg-background">
                       <div className="flex justify-between items-center mb-2">
                         <p className="font-medium text-sm">{suggestion.diagnosis} ({suggestion.icd10Code})</p>
-                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setSelectedDiagnosis({ icd10Code: suggestion.icd10Code, additional_description: suggestion.additional_description })}>Learn more</Button>
+                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setSelectedDiagnosis(suggestion.icd10Code, suggestion.additional_description)}>Learn more</Button>
                       </div>
                       <div className="flex items-center gap-2 mb-1">
                         <Progress value={suggestion.confidence} className="w-full h-2" />
@@ -202,8 +205,8 @@ export function MedicalOutputDashboard({ result, isLoading, error }: MedicalOutp
                 {isExporting ? 'Exporting...' : 'Export as PDF'}
             </Button>
         </CardFooter>
-      )} {}
-      {selectedDiagnosis.icd10Code && <ConditionSummaryDialog icd10Code={selectedDiagnosis.icd10Code} additional_description={selectedDiagnosis.additional_description} onClose={() => setSelectedDiagnosis({ icd10Code: null, additional_description: null })} />}
+      )}
+      {selectedDiagnosis && <ConditionSummaryDialog icd10Code={selectedDiagnosis} onClose={() => setSelectedDiagnosis(null)} />}
     </Card>
   );
 }
